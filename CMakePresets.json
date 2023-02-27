@@ -1,0 +1,29 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "MSCV_64",
+            "displayName": "Visual Studio Community 2019 Release - amd64",
+            "description": "Using compilers for Visual Studio 16 2019 (x64 architecture)",
+            "generator": "Visual Studio 16 2019",
+            "toolset": "host=x64",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "VTK_DIR": "F:\\Lib\\VTK-9.1.0-MSVC-Qt-Debug-MP4\\lib\\cmake\\vtk-9.1",
+                "Qt5_DIR": "D:\\Qt5.14.2\\5.14.2\\msvc2017_64\\lib\\cmake\\Qt5"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "MSCV_64-debug",
+            "displayName": "Visual Studio Community 2019 Release - amd64 - Debug",
+            "configurePreset": "MSCV_64",
+            "configuration": "Debug"
+        }
+    ]
+}

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.txx": "cpp",
+        "iosfwd": "cpp"
+    }
+}
