@@ -3,9 +3,44 @@ The vtkAbstractWidget defines an API and implements methods common to all widget
 
 Note that vtkAbstractWidget provides access to the vtkWidgetEventTranslator. This class is responsible for translating VTK events (defined in vtkCommand.h) into widget events (defined in vtkWidgetEvent.h). This class can be manipulated so that different VTK events can be mapped into widget events, thereby allowing the modification of event bindings. Each subclass of vtkAbstractWidget defines the events to which it responds.
 
-// must override
-CreateDefaultRepresentation()
-SetProcessEvents()
+### must override
+* CreateDefaultRepresentation()
+* SetProcessEvents()
+
+
+## vtkWidgetRepresentation 
+
+### must override
+* SetRenderer() - the renderer in which the representations draws itself.
+Typically the renderer is set by the associated widget.
+Use the widget's SetCurrentRenderer() method in most cases;
+otherwise there is a risk of inconsistent behavior as events
+and drawing may be performed in different viewports.
+* BuildRepresentation() - update the geometry of the widget based on its
+current state.
+
+### suggest override
+* PlaceWidget() - given a bounding box (xmin,xmax,ymin,ymax,zmin,zmax), place
+the widget inside of it. The current orientation of the widget
+is preserved, only scaling and translation is performed.
+StartWidgetInteraction() - generally corresponds to a initial event (e.g.,
+mouse down) that starts the interaction process
+with the widget.
+* WidgetInteraction() - invoked when an event causes the widget to change
+appearance.
+* EndWidgetInteraction() - generally corresponds to a final event (e.g., mouse up)
+and completes the interaction sequence.
+* ComputeInteractionState() - given (X,Y) display coordinates in a renderer, with a
+possible flag that modifies the computation,
+what is the state of the widget?
+* GetInteractionState() - return the current state of the widget. Note that the
+value of "0" typically refers to "outside". The
+interaction state is strictly a function of the
+representation, and the widget/represent must agree
+on what they mean.
+* Highlight() - turn on or off any highlights associated with the widget.
+Highlights are generally turned on when the widget is selected.
+
 
 https://vtk.org/doc/nightly/html/classvtkAbstractWidget.html
 

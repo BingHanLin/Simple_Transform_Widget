@@ -1,42 +1,4 @@
-/*=========================================================================
-
-  Program:   Visualization Toolkit
-  Module:    myLineRepresentation.h
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
-/**
- * @class   myLineRepresentation
- * @brief   a class defining the representation for a vtkLineWidget2
- *
- * This class is a concrete representation for the vtkLineWidget2. It
- * represents a straight line with three handles: one at the beginning and
- * ending of the line, and one used to translate the line. Through
- * interaction with the widget, the line representation can be arbitrarily
- * placed in the 3D space.
- *
- * To use this representation, you normally specify the position of the two
- * end points (either in world or display coordinates). The PlaceWidget()
- * method is also used to initially position the representation.
- *
- * @warning
- * This class, and vtkLineWidget2, are next generation VTK
- * widgets. An earlier version of this functionality was defined in the
- * class vtkLineWidget.
- *
- * @sa
- * vtkLineWidget2 vtkLineWidget
- */
-
-#ifndef myLineRepresentation_h
-#define myLineRepresentation_h
+#pragma once
 
 #include "vtkDeprecation.h"              // For VTK_DEPRECATED_IN_9_0_0
 #include "vtkInteractionWidgetsModule.h" // For export macro
@@ -56,19 +18,19 @@ class vtkVectorText;
 class vtkPolyDataMapper;
 class vtkCellPicker;
 
-class  myLineRepresentation
+class  movableAxesRepresentation
     : public vtkWidgetRepresentation {
 public:
   /**
    * Instantiate the class.
    */
-  static myLineRepresentation *New();
+  static movableAxesRepresentation *New();
 
   ///@{
   /**
    * Standard methods for the class.
    */
-  vtkTypeMacro(myLineRepresentation, vtkWidgetRepresentation);
+  vtkTypeMacro(movableAxesRepresentation, vtkWidgetRepresentation);
   void PrintSelf(ostream &os, vtkIndent indent) override;
   ///@}
 
@@ -98,7 +60,7 @@ public:
    * use for the three internal vtkHandleWidgets within vtkLineWidget2.
    * To use this method, create a dummy vtkHandleWidget (or subclass),
    * and then invoke this method with this dummy. Then the
-   * myLineRepresentation uses this dummy to clone three vtkHandleWidgets
+   * movableAxesRepresentation uses this dummy to clone three vtkHandleWidgets
    * of the same type. Make sure you set the handle representation before
    * the widget is enabled. (The method InstantiateHandleRepresentation()
    * is invoked by the vtkLineWidget2.)
@@ -317,8 +279,8 @@ public:
   void SetRestrictFlag(int restrict_flag);
 
 protected:
-  myLineRepresentation();
-  ~myLineRepresentation() override;
+  movableAxesRepresentation();
+  ~movableAxesRepresentation() override;
 
   // The handle and the rep used to close the handles
   vtkPointHandleRepresentation3D *HandleRepresentation;
@@ -390,8 +352,7 @@ protected:
   vtkCellPicker *LinePicker;
 
 private:
-  myLineRepresentation(const myLineRepresentation &) = delete;
-  void operator=(const myLineRepresentation &) = delete;
+  movableAxesRepresentation(const movableAxesRepresentation &) = delete;
+  void operator=(const movableAxesRepresentation &) = delete;
 };
 
-#endif

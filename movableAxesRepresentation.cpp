@@ -1,50 +1,37 @@
-/*=========================================================================
+#include <vtkActor.h>
+#include <vtkBox.h>
+#include <vtkCallbackCommand.h>
+#include <vtkCamera.h>
+#include <vtkCellPicker.h>
+#include <vtkConeSource.h>
+#include <vtkFollower.h>
+#include <vtkInteractorObserver.h>
+#include <vtkLine.h>
+#include <vtkLineSource.h>
+#include <vtkMath.h>
+#include <vtkObjectFactory.h>
+#include <vtkPointHandleRepresentation3D.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkSphereSource.h>
+#include <vtkVector.h>
+#include <vtkVectorOperators.h>
+#include <vtkVectorText.h>
+#include <vtkWindow.h>
 
-  Program:   Visualization Toolkit
-  Module:    myLineRepresentation.cxx
-
-  Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
-  All rights reserved.
-  See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
-
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
-
-=========================================================================*/
-#include "vtkActor.h"
-#include "vtkBox.h"
-#include "vtkCallbackCommand.h"
-#include "vtkCamera.h"
-#include "vtkCellPicker.h"
-#include "vtkConeSource.h"
-#include "vtkFollower.h"
-#include "vtkInteractorObserver.h"
-#include "vtkLine.h"
-#include "myLineRepresentation.h"
-#include "vtkLineSource.h"
-#include "vtkMath.h"
-#include "vtkObjectFactory.h"
-#include "vtkPointHandleRepresentation3D.h"
-#include "vtkPolyData.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkProperty.h"
-#include "vtkRenderWindowInteractor.h"
-#include "vtkRenderer.h"
-#include "vtkSphereSource.h"
-#include "vtkVector.h"
-#include "vtkVectorOperators.h"
-#include "vtkVectorText.h"
-#include "vtkWindow.h"
+#include "movableAxesRepresentation.hpp"
 
 
-vtkStandardNewMacro(myLineRepresentation);
+vtkStandardNewMacro(movableAxesRepresentation);
 
-vtkCxxSetObjectMacro(myLineRepresentation, HandleRepresentation,
+vtkCxxSetObjectMacro(movableAxesRepresentation, HandleRepresentation,
                      vtkPointHandleRepresentation3D);
 
 //------------------------------------------------------------------------------
-myLineRepresentation::myLineRepresentation() {
+movableAxesRepresentation::movableAxesRepresentation() {
   // Handle size is in pixels for this widget
   this->HandleSize = 5.0;
 
@@ -137,7 +124,7 @@ myLineRepresentation::myLineRepresentation() {
   this->LinePicker->AddPickList(this->LineActor);
   this->LinePicker->PickFromListOn();
 
-  this->RepresentationState = myLineRepresentation::Outside;
+  this->RepresentationState = movableAxesRepresentation::Outside;
   this->AnnotationTextScaleInitialized = false;
 
   // Initial creation of the widget, serves to initialize it.
@@ -147,7 +134,7 @@ myLineRepresentation::myLineRepresentation() {
 }
 
 //------------------------------------------------------------------------------
-myLineRepresentation::~myLineRepresentation() {
+movableAxesRepresentation::~movableAxesRepresentation() {
   if (this->HandleRepresentation) {
     this->HandleRepresentation->Delete();
   }
@@ -193,7 +180,7 @@ myLineRepresentation::~myLineRepresentation() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetDirectionalLine(bool val) {
+void movableAxesRepresentation::SetDirectionalLine(bool val) {
   if (this->DirectionalLine == val) {
     return;
   }
@@ -218,10 +205,10 @@ void myLineRepresentation::SetDirectionalLine(bool val) {
 }
 
 //------------------------------------------------------------------------------
-double myLineRepresentation::GetDistance() { return this->Distance; }
+double movableAxesRepresentation::GetDistance() { return this->Distance; }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::InstantiateHandleRepresentation() {
+void movableAxesRepresentation::InstantiateHandleRepresentation() {
   if (!this->Point1Representation) {
     this->Point1Representation = this->HandleRepresentation->NewInstance();
     this->Point1Representation->ShallowCopy(this->HandleRepresentation);
@@ -239,17 +226,17 @@ void myLineRepresentation::InstantiateHandleRepresentation() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetResolution(int r) {
+void movableAxesRepresentation::SetResolution(int r) {
   this->LineSource->SetResolution(r);
 }
 
 //------------------------------------------------------------------------------
-int myLineRepresentation::GetResolution() {
+int movableAxesRepresentation::GetResolution() {
   return this->LineSource->GetResolution();
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::GetPolyData(vtkPolyData *pd) {
+void movableAxesRepresentation::GetPolyData(vtkPolyData *pd) {
   this->LineSource->Update();
   pd->ShallowCopy(this->LineSource->GetOutput());
 }
@@ -257,25 +244,25 @@ void myLineRepresentation::GetPolyData(vtkPolyData *pd) {
 //-- Set/Get position of the three handles -----------------------------
 // Point1
 //------------------------------------------------------------------------------
-void myLineRepresentation::GetPoint1WorldPosition(double pos[3]) {
+void movableAxesRepresentation::GetPoint1WorldPosition(double pos[3]) {
   this->Point1Representation->GetWorldPosition(pos);
 }
 
-double *myLineRepresentation::GetPoint1WorldPosition() {
+double *movableAxesRepresentation::GetPoint1WorldPosition() {
   return this->Point1Representation->GetWorldPosition();
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::GetPoint1DisplayPosition(double pos[3]) {
+void movableAxesRepresentation::GetPoint1DisplayPosition(double pos[3]) {
   this->Point1Representation->GetDisplayPosition(pos);
 }
 
-double *myLineRepresentation::GetPoint1DisplayPosition() {
+double *movableAxesRepresentation::GetPoint1DisplayPosition() {
   return this->Point1Representation->GetDisplayPosition();
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetPoint1WorldPosition(double x[3]) {
+void movableAxesRepresentation::SetPoint1WorldPosition(double x[3]) {
   this->Point1Representation->SetWorldPosition(x);
   this->LineSource->SetPoint1(x);
   // double p[3];
@@ -284,7 +271,7 @@ void myLineRepresentation::SetPoint1WorldPosition(double x[3]) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetPoint1DisplayPosition(double x[3]) {
+void movableAxesRepresentation::SetPoint1DisplayPosition(double x[3]) {
   this->Point1Representation->SetDisplayPosition(x);
   double p[3];
   this->Point1Representation->GetWorldPosition(p);
@@ -293,25 +280,25 @@ void myLineRepresentation::SetPoint1DisplayPosition(double x[3]) {
 
 // Point2
 //------------------------------------------------------------------------------
-void myLineRepresentation::GetPoint2WorldPosition(double pos[3]) {
+void movableAxesRepresentation::GetPoint2WorldPosition(double pos[3]) {
   this->Point2Representation->GetWorldPosition(pos);
 }
 
-double *myLineRepresentation::GetPoint2WorldPosition() {
+double *movableAxesRepresentation::GetPoint2WorldPosition() {
   return this->Point2Representation->GetWorldPosition();
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::GetPoint2DisplayPosition(double pos[3]) {
+void movableAxesRepresentation::GetPoint2DisplayPosition(double pos[3]) {
   this->Point2Representation->GetDisplayPosition(pos);
 }
 
-double *myLineRepresentation::GetPoint2DisplayPosition() {
+double *movableAxesRepresentation::GetPoint2DisplayPosition() {
   return this->Point2Representation->GetDisplayPosition();
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetPoint2WorldPosition(double x[3]) {
+void movableAxesRepresentation::SetPoint2WorldPosition(double x[3]) {
   this->Point2Representation->SetWorldPosition(x);
   this->LineSource->SetPoint2(x);
   // double p[3];
@@ -320,7 +307,7 @@ void myLineRepresentation::SetPoint2WorldPosition(double x[3]) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetPoint2DisplayPosition(double x[3]) {
+void movableAxesRepresentation::SetPoint2DisplayPosition(double x[3]) {
   this->Point2Representation->SetDisplayPosition(x);
   double p[3];
   this->Point2Representation->GetWorldPosition(p);
@@ -328,7 +315,7 @@ void myLineRepresentation::SetPoint2DisplayPosition(double x[3]) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetRenderer(vtkRenderer *ren) {
+void movableAxesRepresentation::SetRenderer(vtkRenderer *ren) {
   this->HandleRepresentation->SetRenderer(ren);
   this->Point1Representation->SetRenderer(ren);
   this->Point2Representation->SetRenderer(ren);
@@ -337,7 +324,7 @@ void myLineRepresentation::SetRenderer(vtkRenderer *ren) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::StartWidgetInteraction(double e[2]) {
+void movableAxesRepresentation::StartWidgetInteraction(double e[2]) {
   // Store the start position
   this->StartEventPosition[0] = e[0];
   this->StartEventPosition[1] = e[1];
@@ -353,7 +340,7 @@ void myLineRepresentation::StartWidgetInteraction(double e[2]) {
   this->Point2Representation->GetWorldPosition(this->StartP2);
   this->LineHandleRepresentation->GetWorldPosition(this->StartLineHandle);
 
-  if (this->InteractionState == myLineRepresentation::Scaling) {
+  if (this->InteractionState == movableAxesRepresentation::Scaling) {
     double dp1[3], dp2[3];
     this->Point1Representation->GetDisplayPosition(dp1);
     this->Point2Representation->GetDisplayPosition(dp2);
@@ -363,8 +350,8 @@ void myLineRepresentation::StartWidgetInteraction(double e[2]) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::WidgetInteraction(double e[2]) {
-  if (this->InteractionState == myLineRepresentation::OnLine) {
+void movableAxesRepresentation::WidgetInteraction(double e[2]) {
+  if (this->InteractionState == movableAxesRepresentation::OnLine) {
     double x[3], p1[3], p2[3];
 
     // Get the new position
@@ -383,7 +370,7 @@ void myLineRepresentation::WidgetInteraction(double e[2]) {
   }
 
   else if (this->InteractionState ==
-           myLineRepresentation::Scaling) { // scale about the center of the
+           movableAxesRepresentation::Scaling) { // scale about the center of the
                                              // widget
     double p1[3], p2[3], center[3];
 
@@ -412,7 +399,7 @@ void myLineRepresentation::WidgetInteraction(double e[2]) {
     this->Point2Representation->SetWorldPosition(p2);
   }
 
-  else if (this->InteractionState == myLineRepresentation::TranslatingP1) {
+  else if (this->InteractionState == movableAxesRepresentation::TranslatingP1) {
     double x[3], p2[3];
     // Get the new position
     this->Point1Representation->GetWorldPosition(x);
@@ -422,7 +409,7 @@ void myLineRepresentation::WidgetInteraction(double e[2]) {
     this->Point2Representation->SetWorldPosition(p2);
   }
 
-  else if (this->InteractionState == myLineRepresentation::TranslatingP2) {
+  else if (this->InteractionState == movableAxesRepresentation::TranslatingP2) {
     double x[3], p1[3];
     // Get the new position
     this->Point2Representation->GetWorldPosition(x);
@@ -439,7 +426,7 @@ void myLineRepresentation::WidgetInteraction(double e[2]) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::PlaceWidget(double bds[6]) {
+void movableAxesRepresentation::PlaceWidget(double bds[6]) {
   int i;
   double bounds[6], center[3];
 
@@ -496,23 +483,23 @@ void myLineRepresentation::PlaceWidget(double bds[6]) {
 }
 
 //------------------------------------------------------------------------------
-int myLineRepresentation::ComputeInteractionState(int x, int y,
+int movableAxesRepresentation::ComputeInteractionState(int x, int y,
                                                    int vtkNotUsed(modify)) {
   // Check if we are on end points. Use the handles to determine this.
   int p1State = this->Point1Representation->ComputeInteractionState(x, y, 0);
   int p2State = this->Point2Representation->ComputeInteractionState(x, y, 0);
   if (p1State == vtkHandleRepresentation::Nearby) {
-    this->InteractionState = myLineRepresentation::OnP1;
-    this->SetRepresentationState(myLineRepresentation::OnP1);
+    this->InteractionState = movableAxesRepresentation::OnP1;
+    this->SetRepresentationState(movableAxesRepresentation::OnP1);
   } else if (p2State == vtkHandleRepresentation::Nearby) {
-    this->InteractionState = myLineRepresentation::OnP2;
-    this->SetRepresentationState(myLineRepresentation::OnP2);
+    this->InteractionState = movableAxesRepresentation::OnP2;
+    this->SetRepresentationState(movableAxesRepresentation::OnP2);
   } else {
-    this->InteractionState = myLineRepresentation::Outside;
+    this->InteractionState = movableAxesRepresentation::Outside;
   }
 
   // Okay if we're near a handle return, otherwise test the line
-  if (this->InteractionState != myLineRepresentation::Outside) {
+  if (this->InteractionState != movableAxesRepresentation::Outside) {
     return this->InteractionState;
   }
 
@@ -535,8 +522,8 @@ int myLineRepresentation::ComputeInteractionState(int x, int y,
 
   int onLine = (vtkLine::DistanceToLine(xyz, p1, p2, t, closest) <= tol2);
   if (onLine && t < 1.0 && t > 0.0) {
-    this->InteractionState = myLineRepresentation::OnLine;
-    this->SetRepresentationState(myLineRepresentation::OnLine);
+    this->InteractionState = movableAxesRepresentation::OnLine;
+    this->SetRepresentationState(movableAxesRepresentation::OnLine);
     this->GetPoint1WorldPosition(pos1);
     this->GetPoint2WorldPosition(pos2);
 
@@ -544,41 +531,41 @@ int myLineRepresentation::ComputeInteractionState(int x, int y,
     this->LinePicker->GetPickPosition(closest);
     this->LineHandleRepresentation->SetWorldPosition(closest);
   } else {
-    this->InteractionState = myLineRepresentation::Outside;
-    this->SetRepresentationState(myLineRepresentation::Outside);
+    this->InteractionState = movableAxesRepresentation::Outside;
+    this->SetRepresentationState(movableAxesRepresentation::Outside);
   }
 
   return this->InteractionState;
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetRepresentationState(int state) {
+void movableAxesRepresentation::SetRepresentationState(int state) {
   if (this->RepresentationState == state) {
     return;
   }
 
-  state = (state < myLineRepresentation::Outside
-               ? myLineRepresentation::Outside
-               : (state > myLineRepresentation::Scaling
-                      ? myLineRepresentation::Scaling
+  state = (state < movableAxesRepresentation::Outside
+               ? movableAxesRepresentation::Outside
+               : (state > movableAxesRepresentation::Scaling
+                      ? movableAxesRepresentation::Scaling
                       : state));
 
   this->RepresentationState = state;
   this->Modified();
 
-  if (state == myLineRepresentation::Outside) {
+  if (state == movableAxesRepresentation::Outside) {
     this->HighlightPoint(0, 0);
     this->HighlightPoint(1, 0);
     this->HighlightLine(0);
-  } else if (state == myLineRepresentation::OnP1) {
+  } else if (state == movableAxesRepresentation::OnP1) {
     this->HighlightPoint(0, 1);
     this->HighlightPoint(1, 0);
     this->HighlightLine(0);
-  } else if (state == myLineRepresentation::OnP2) {
+  } else if (state == movableAxesRepresentation::OnP2) {
     this->HighlightPoint(0, 0);
     this->HighlightPoint(1, 1);
     this->HighlightLine(0);
-  } else if (state == myLineRepresentation::OnLine) {
+  } else if (state == movableAxesRepresentation::OnLine) {
     this->HighlightPoint(0, 0);
     this->HighlightPoint(1, 0);
     this->HighlightLine(1);
@@ -590,7 +577,7 @@ void myLineRepresentation::SetRepresentationState(int state) {
 }
 
 //------------------------------------------------------------------------------
-double *myLineRepresentation::GetBounds() {
+double *movableAxesRepresentation::GetBounds() {
   this->BuildRepresentation();
   this->BoundingBox->SetBounds(this->LineActor->GetBounds());
   this->BoundingBox->AddBounds(this->Handle[0]->GetBounds());
@@ -600,7 +587,7 @@ double *myLineRepresentation::GetBounds() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::CreateDefaultProperties() {
+void movableAxesRepresentation::CreateDefaultProperties() {
   // Endpoint properties
   this->EndPointProperty = vtkProperty::New();
   this->EndPointProperty->SetColor(1, 1, 1);
@@ -627,7 +614,7 @@ void myLineRepresentation::CreateDefaultProperties() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SizeHandles() {
+void movableAxesRepresentation::SizeHandles() {
   // The SizeHandles() method depends on the LastPickPosition data member.
   double radius = this->vtkWidgetRepresentation::SizeHandlesInPixels(
       1.35, this->LineSource->GetPoint1());
@@ -645,7 +632,7 @@ void myLineRepresentation::SizeHandles() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::BuildRepresentation() {
+void movableAxesRepresentation::BuildRepresentation() {
   // Rebuild only if necessary
   if (this->GetMTime() > this->BuildTime ||
       this->Point1Representation->GetMTime() > this->BuildTime ||
@@ -713,7 +700,7 @@ void myLineRepresentation::BuildRepresentation() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::HighlightPoint(int ptId, int highlight) {
+void movableAxesRepresentation::HighlightPoint(int ptId, int highlight) {
   if (ptId == 0) {
     if (highlight) {
       this->Handle[0]->SetProperty(this->SelectedEndPointProperty);
@@ -744,7 +731,7 @@ void myLineRepresentation::HighlightPoint(int ptId, int highlight) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::HighlightLine(int highlight) {
+void movableAxesRepresentation::HighlightLine(int highlight) {
   if (highlight) {
     this->LineActor->SetProperty(this->SelectedLineProperty);
   } else {
@@ -753,14 +740,14 @@ void myLineRepresentation::HighlightLine(int highlight) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetLineColor(double r, double g, double b) {
+void movableAxesRepresentation::SetLineColor(double r, double g, double b) {
   if (this->GetLineProperty()) {
     this->GetLineProperty()->SetColor(r, g, b);
   }
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::ClampPosition(double x[3]) {
+void movableAxesRepresentation::ClampPosition(double x[3]) {
   for (int i = 0; i < 3; i++) {
     if (x[i] < this->InitialBounds[2 * i]) {
       x[i] = this->InitialBounds[2 * i];
@@ -772,7 +759,7 @@ void myLineRepresentation::ClampPosition(double x[3]) {
 }
 
 //------------------------------------------------------------------------------
-int myLineRepresentation::InBounds(double x[3]) {
+int movableAxesRepresentation::InBounds(double x[3]) {
   for (int i = 0; i < 3; i++) {
     if (x[i] < this->InitialBounds[2 * i] ||
         x[i] > this->InitialBounds[2 * i + 1]) {
@@ -783,7 +770,7 @@ int myLineRepresentation::InBounds(double x[3]) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::GetActors(vtkPropCollection *pc) {
+void movableAxesRepresentation::GetActors(vtkPropCollection *pc) {
   this->LineActor->GetActors(pc);
   this->Handle[0]->GetActors(pc);
   this->Handle[1]->GetActors(pc);
@@ -791,7 +778,7 @@ void myLineRepresentation::GetActors(vtkPropCollection *pc) {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::ReleaseGraphicsResources(vtkWindow *w) {
+void movableAxesRepresentation::ReleaseGraphicsResources(vtkWindow *w) {
   this->LineActor->ReleaseGraphicsResources(w);
   this->Handle[0]->ReleaseGraphicsResources(w);
   this->Handle[1]->ReleaseGraphicsResources(w);
@@ -799,7 +786,7 @@ void myLineRepresentation::ReleaseGraphicsResources(vtkWindow *w) {
 }
 
 //------------------------------------------------------------------------------
-int myLineRepresentation::RenderOpaqueGeometry(vtkViewport *v) {
+int movableAxesRepresentation::RenderOpaqueGeometry(vtkViewport *v) {
   int count = 0;
   this->BuildRepresentation();
   count += this->LineActor->RenderOpaqueGeometry(v);
@@ -813,7 +800,7 @@ int myLineRepresentation::RenderOpaqueGeometry(vtkViewport *v) {
 }
 
 //------------------------------------------------------------------------------
-int myLineRepresentation::RenderTranslucentPolygonalGeometry(vtkViewport *v) {
+int movableAxesRepresentation::RenderTranslucentPolygonalGeometry(vtkViewport *v) {
   int count = 0;
   this->BuildRepresentation();
   count += this->LineActor->RenderTranslucentPolygonalGeometry(v);
@@ -827,7 +814,7 @@ int myLineRepresentation::RenderTranslucentPolygonalGeometry(vtkViewport *v) {
 }
 
 //------------------------------------------------------------------------------
-vtkTypeBool myLineRepresentation::HasTranslucentPolygonalGeometry() {
+vtkTypeBool movableAxesRepresentation::HasTranslucentPolygonalGeometry() {
   int result = 0;
   this->BuildRepresentation();
   result |= this->LineActor->HasTranslucentPolygonalGeometry();
@@ -841,7 +828,7 @@ vtkTypeBool myLineRepresentation::HasTranslucentPolygonalGeometry() {
 }
 
 //------------------------------------------------------------------------------
-vtkMTimeType myLineRepresentation::GetMTime() {
+vtkMTimeType movableAxesRepresentation::GetMTime() {
   vtkMTimeType mTime = this->Superclass::GetMTime();
   vtkMTimeType mTime2 = this->Point1Representation->GetMTime();
   mTime = (mTime2 > mTime ? mTime2 : mTime);
@@ -854,31 +841,31 @@ vtkMTimeType myLineRepresentation::GetMTime() {
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetRestrictFlag(int restrict_flag) {
-  VTK_LEGACY_BODY(myLineRepresentation::SetRestricFlag, "VTK 9");
+void movableAxesRepresentation::SetRestrictFlag(int restrict_flag) {
+  VTK_LEGACY_BODY(movableAxesRepresentation::SetRestricFlag, "VTK 9");
   this->GetPoint1Representation()->SetTranslationAxis(restrict_flag - 1);
   this->GetPoint2Representation()->SetTranslationAxis(restrict_flag - 1);
   this->GetLineHandleRepresentation()->SetTranslationAxis(restrict_flag - 1);
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::SetDistanceAnnotationScale(double scale[3]) {
+void movableAxesRepresentation::SetDistanceAnnotationScale(double scale[3]) {
   this->TextActor->SetScale(scale);
   this->AnnotationTextScaleInitialized = true;
 }
 
 //------------------------------------------------------------------------------
-double *myLineRepresentation::GetDistanceAnnotationScale() {
+double *movableAxesRepresentation::GetDistanceAnnotationScale() {
   return this->TextActor->GetScale();
 }
 
 //------------------------------------------------------------------------------
-vtkProperty *myLineRepresentation::GetDistanceAnnotationProperty() {
+vtkProperty *movableAxesRepresentation::GetDistanceAnnotationProperty() {
   return this->TextActor->GetProperty();
 }
 
 //------------------------------------------------------------------------------
-void myLineRepresentation::PrintSelf(ostream &os, vtkIndent indent) {
+void movableAxesRepresentation::PrintSelf(ostream &os, vtkIndent indent) {
   this->Superclass::PrintSelf(os, indent);
 
   if (this->LineProperty) {

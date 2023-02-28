@@ -2,7 +2,7 @@
 
 #include "vtkAbstractWidget.h"
 
-class myLineRepresentation;
+class movableAxesRepresentation;
 class vtkHandleWidget;
 
 class movableAxesWidget : public vtkAbstractWidget {
@@ -29,7 +29,7 @@ public:
    * widget in the scene. Note that the representation is a subclass of vtkProp
    * so it can be added to the renderer independent of the widget.
    */
-  void SetRepresentation(myLineRepresentation *r) {
+  void SetRepresentation(movableAxesRepresentation *r) {
     this->Superclass::SetWidgetRepresentation(
         reinterpret_cast<vtkWidgetRepresentation *>(r));
   }

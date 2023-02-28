@@ -1,4 +1,3 @@
-#include <myLineRepresentation.h>
 #include <vtkActor.h>
 #include <vtkCamera.h>
 #include <vtkCommand.h>
@@ -13,6 +12,7 @@
 #include <vtkSphereSource.h>
 
 #include "movableAxesWidget.hpp"
+#include "movableAxesRepresentation.hpp"
 
 // This does the actual work.
 // Callback for the interaction
@@ -27,7 +27,7 @@ public:
 
     // Get the actual box coordinates of the line
     vtkNew<vtkPolyData> polydata;
-    static_cast<myLineRepresentation *>(lineWidget->GetRepresentation())
+    static_cast<movableAxesRepresentation *>(lineWidget->GetRepresentation())
         ->GetPolyData(polydata);
 
     // Display one of the points, just so we know it's working
@@ -69,7 +69,7 @@ int main(int, char *[]) {
   lineWidget->CreateDefaultRepresentation();
 
   // You could do this if you want to set properties at this point:
-  // vtkNew<myLineRepresentation> lineRepresentation;
+  // vtkNew<movableAxesRepresentation> lineRepresentation;
   // lineWidget->SetRepresentation(lineRepresentation);
 
   vtkNew<vtkLineCallback> lineCallback;

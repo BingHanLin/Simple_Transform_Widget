@@ -11,7 +11,7 @@
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "$PATH;${command:cmake.launchTargetDirectory};F:\\Lib\\VTK-9.1.0-MSVC-Qt-Debug-MP4\\bin;D:\\Qt5.14.2\\5.14.2\\msvc2017_64\\bin"
+                    "value": "$PATH;${command:cmake.launchTargetDirectory};C:\\Lib\\VTK-9.1.0-MSVC-Qt-Debug-MP4\\bin;C:\\Applications\\Qt\\Qt5.14.2\\5.14.2\\msvc2017_64\\bin"
                 }
             ],
             "console": "externalTerminal"

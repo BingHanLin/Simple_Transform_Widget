@@ -7,7 +7,7 @@ find_package(VTK REQUIRED)
 
 add_executable(${PROJECT_NAME}  
   ${PROJECT_SOURCE_DIR}/main.cpp
-  ${PROJECT_SOURCE_DIR}/myLineRepresentation.cpp
+  ${PROJECT_SOURCE_DIR}/movableAxesRepresentation.cpp
   ${PROJECT_SOURCE_DIR}/movableAxesWidget.cpp
 )
 

@@ -13,8 +13,8 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe",
-                "VTK_DIR": "F:\\Lib\\VTK-9.1.0-MSVC-Qt-Debug-MP4\\lib\\cmake\\vtk-9.1",
-                "Qt5_DIR": "D:\\Qt5.14.2\\5.14.2\\msvc2017_64\\lib\\cmake\\Qt5"
+                "VTK_DIR": "C:\\Lib\\VTK-9.1.0-MSVC-Qt-Debug-MP4\\lib\\cmake\\vtk-9.1",
+                "Qt5_DIR": "C:\\Applications\\Qt\\Qt5.14.2\\5.14.2\\msvc2017_64\\lib\\cmake\\Qt5"
             }
         }
     ],

@@ -1,7 +1,7 @@
 #include <vtkObjectFactory.h>
 
 #include "movableAxesWidget.hpp"
-#include "myLineRepresentation.h"
+#include "movableAxesRepresentation.hpp"
 
 vtkStandardNewMacro(movableAxesWidget);
 
@@ -13,7 +13,7 @@ void movableAxesWidget::SetEnabled(int enabled) {}
 
 void movableAxesWidget::CreateDefaultRepresentation() {
   if (!this->WidgetRep) {
-    this->WidgetRep = myLineRepresentation::New();
+    this->WidgetRep = movableAxesRepresentation::New();
   }
 }
 
