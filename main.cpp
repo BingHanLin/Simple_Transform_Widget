@@ -11,8 +11,9 @@
 #include <vtkRenderer.h>
 #include <vtkSphereSource.h>
 
-#include "movableAxesWidget.hpp"
 #include "movableAxesRepresentation.hpp"
+#include "movableAxesWidget.hpp"
+
 
 // This does the actual work.
 // Callback for the interaction
@@ -22,18 +23,18 @@ public:
 
   virtual void Execute(vtkObject *caller, unsigned long, void *) {
 
-    movableAxesWidget *lineWidget =
-        reinterpret_cast<movableAxesWidget *>(caller);
+    // movableAxesWidget *lineWidget =
+    //     reinterpret_cast<movableAxesWidget *>(caller);
 
-    // Get the actual box coordinates of the line
-    vtkNew<vtkPolyData> polydata;
-    static_cast<movableAxesRepresentation *>(lineWidget->GetRepresentation())
-        ->GetPolyData(polydata);
+    // // Get the actual box coordinates of the line
+    // vtkNew<vtkPolyData> polydata;
+    // static_cast<movableAxesRepresentation *>(lineWidget->GetRepresentation())
+    //     ->GetPolyData(polydata);
 
-    // Display one of the points, just so we know it's working
-    double p[3];
-    polydata->GetPoint(0, p);
-    std::cout << "P: " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+    // // Display one of the points, just so we know it's working
+    // double p[3];
+    // polydata->GetPoint(0, p);
+    // std::cout << "P: " << p[0] << " " << p[1] << " " << p[2] << std::endl;
   }
   vtkLineCallback() {}
 };
