@@ -1,8 +1,10 @@
 #include <vtkActor.h>
+#include <vtkAxesActor.h>
 #include <vtkCamera.h>
 #include <vtkCommand.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
+#include <vtkOrientationMarkerWidget.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
@@ -13,7 +15,6 @@
 
 #include "movableAxesRepresentation.hpp"
 #include "movableAxesWidget.hpp"
-
 
 // This does the actual work.
 // Callback for the interaction
@@ -58,7 +59,7 @@ int main(int, char *[]) {
   renderWindow->AddRenderer(renderer);
   renderWindow->SetWindowName("LineWidget2");
 
-  renderer->AddActor(actor);
+  // renderer->AddActor(actor);
   renderer->SetBackground(colors->GetColor3d("MidnightBlue").GetData());
 
   // An interactor
@@ -76,6 +77,16 @@ int main(int, char *[]) {
   vtkNew<vtkLineCallback> lineCallback;
 
   lineWidget->AddObserver(vtkCommand::InteractionEvent, lineCallback);
+
+  // Axes Widget
+  auto vtkAxes = vtkSmartPointer<vtkAxesActor>::New();
+  auto axesWidget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+  axesWidget->SetOrientationMarker(vtkAxes);
+  axesWidget->SetDefaultRenderer(renderer);
+  axesWidget->SetInteractor(renderWindowInteractor);
+  axesWidget->SetViewport(0.0, 0.0, 0.20, 0.20);
+  axesWidget->SetEnabled(1);
+  axesWidget->InteractiveOff();
 
   // Render
   renderWindow->Render();

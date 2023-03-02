@@ -1,22 +1,11 @@
 #pragma once
+#include <array>
 
-#include "vtkDeprecation.h"              // For VTK_DEPRECATED_IN_9_0_0
-#include "vtkInteractionWidgetsModule.h" // For export macro
-#include "vtkWidgetRepresentation.h"
+#include <vtkMatrix4x4.h>
+#include <vtkSmartPointer.h>
+#include <vtkWidgetRepresentation.h>
 
 class vtkActor;
-class vtkConeSource;
-class vtkPolyDataMapper;
-class vtkLineSource;
-class vtkProperty;
-class vtkPolyData;
-class vtkPolyDataAlgorithm;
-class vtkPointHandleRepresentation3D;
-class vtkBox;
-class vtkFollower;
-class vtkVectorText;
-class vtkPolyDataMapper;
-class vtkCellPicker;
 
 class movableAxesRepresentation : public vtkWidgetRepresentation {
 public:
@@ -55,11 +44,20 @@ public:
    */
   void SetRenderer(vtkRenderer *ren) override;
 
+  void GetActors(vtkPropCollection *pc) override;
+
 protected:
   movableAxesRepresentation();
   ~movableAxesRepresentation() override;
 
 private:
+  const std::array<std::array<double, 3>, 3> axisNormalColor_ = {
+      {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
+
+  std::array<vtkSmartPointer<vtkActor>, 3> axisRingActors_;
+
+  std::array<vtkSmartPointer<vtkMatrix4x4>, 3> axisRingInitMatrix_;
+
   movableAxesRepresentation(const movableAxesRepresentation &) = delete;
   void operator=(const movableAxesRepresentation &) = delete;
 };

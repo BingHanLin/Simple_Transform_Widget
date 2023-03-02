@@ -2,8 +2,9 @@
 
 #include "vtkAbstractWidget.h"
 
+class vtkCallbackCommand;
+
 class movableAxesRepresentation;
-class vtkHandleWidget;
 
 class movableAxesWidget : public vtkAbstractWidget {
 public:
@@ -50,6 +51,11 @@ protected:
   ~movableAxesWidget() override;
 
 private:
+  enum WIDGETSTATE { Start = 0, Active };
+
+  int state_;
+  vtkCallbackCommand *keyEventCallbackCommand_;
+
   movableAxesWidget(const movableAxesWidget &) = delete;
   void operator=(const movableAxesWidget &) = delete;
 };
