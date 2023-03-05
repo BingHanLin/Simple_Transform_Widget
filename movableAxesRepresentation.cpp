@@ -1,5 +1,7 @@
 #include <vtkActor.h>
+#include <vtkAssemblyPath.h>
 #include <vtkCallbackCommand.h>
+#include <vtkCellPicker.h>
 #include <vtkInteractorObserver.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyDataMapper.h>
@@ -57,6 +59,16 @@ movableAxesRepresentation::movableAxesRepresentation()
         axisRingActors_[2]->SetUserTransform(trans);
     }
 
+    {
+        picker_ = vtkSmartPointer<vtkCellPicker>::New();
+        picker_->SetTolerance(0.001);
+        for (auto i = 0; i < 3; i++)
+        {
+            picker_->AddPickList(axisRingActors_[i]);
+        }
+        picker_->PickFromListOn();
+    }
+
     // Define the point coordinates
     double bounds[6];
     bounds[0] = -0.5;
@@ -96,6 +108,30 @@ int movableAxesRepresentation::ComputeInteractionState(int x, int y,
     {
         this->InteractionState = INTERACTIONSTATE::outside;
         return this->InteractionState;
+    }
+
+    auto path = this->GetAssemblyPath(x, y, 0., picker_);
+    if (path != nullptr)
+    {
+        currActor_ =
+            reinterpret_cast<vtkActor *>(path->GetFirstNode()->GetViewProp());
+
+        if (currActor_ == axisRingActors_[0])
+        {
+            this->InteractionState = INTERACTIONSTATE::onXRing;
+        }
+        else if (currActor_ == axisRingActors_[1])
+        {
+            this->InteractionState = INTERACTIONSTATE::onYRing;
+        }
+        else if (currActor_ == axisRingActors_[2])
+        {
+            this->InteractionState = INTERACTIONSTATE::onZRing;
+        }
+    }
+    else
+    {
+        this->InteractionState = INTERACTIONSTATE::outside;
     }
 
     return this->InteractionState;

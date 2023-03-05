@@ -6,7 +6,7 @@
 #include <vtkWidgetRepresentation.h>
 
 class vtkActor;
-
+class vtkCellPicker;
 class movableAxesRepresentation : public vtkWidgetRepresentation
 {
    public:
@@ -64,8 +64,10 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
     std::array<vtkSmartPointer<vtkActor>, 3> axisRingActors_;
-
     std::array<vtkSmartPointer<vtkMatrix4x4>, 3> axisRingInitMatrix_;
+
+    vtkSmartPointer<vtkCellPicker> picker_;
+    vtkActor *currActor_ = nullptr;
 
     movableAxesRepresentation(const movableAxesRepresentation &) = delete;
     void operator=(const movableAxesRepresentation &) = delete;

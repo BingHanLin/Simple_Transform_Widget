@@ -146,6 +146,7 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         const int prevState = self->WidgetRep->GetInteractionState();
         const int currState = self->WidgetRep->ComputeInteractionState(x, y);
         int cursorChanged = 0;
+        std::cout << "currState: " << currState << std::endl;
 
         if (currState == movableAxesRepresentation::INTERACTIONSTATE::outside)
         {
@@ -155,7 +156,6 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         {
             cursorChanged = self->RequestCursorShape(VTK_CURSOR_HAND);
 
-            std::cout << "currState: " << currState << std::endl;
             // if (currState ==
             //         movableAxesRepresentation::INTERACTIONSTATE::onXRing ||
             //     currState ==
@@ -165,6 +165,12 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
             // {
             //     self->Point1Widget->SetEnabled(1);
             // }
+        }
+        self->Interactor->Enable();
+
+        if (cursorChanged || prevState != currState)
+        {
+            self->Render();
         }
     }
     else  // if ( self->WidgetState == vtkLineWidget2::Active )
