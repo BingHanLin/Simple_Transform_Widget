@@ -4,9 +4,10 @@
 #include <vtkCellPicker.h>
 #include <vtkInteractorObserver.h>
 #include <vtkObjectFactory.h>
+#include <vtkParametricFunctionSource.h>
+#include <vtkParametricTorus.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
-#include <vtkRegularPolygonSource.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkTransform.h>
@@ -22,13 +23,18 @@ movableAxesRepresentation::movableAxesRepresentation()
     {
         axisRingActors_[i] = vtkSmartPointer<vtkActor>::New();
 
-        vtkNew<vtkRegularPolygonSource> polygonSource;
-        polygonSource->SetNumberOfSides(100);
-        polygonSource->SetRadius(0.5);
-        polygonSource->SetCenter(0, 0, 0);
+        vtkNew<vtkParametricTorus> paramTorus;
+        paramTorus->SetRingRadius(0.5);
+        paramTorus->SetCrossSectionRadius(0.025);
+
+        vtkNew<vtkParametricFunctionSource> paramSource;
+        paramSource->SetParametricFunction(paramTorus);
+        paramSource->SetUResolution(60);
+        paramSource->SetVResolution(15);
+        paramSource->Update();
 
         vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputConnection(polygonSource->GetOutputPort());
+        mapper->SetInputConnection(paramSource->GetOutputPort());
 
         axisRingActors_[i]->SetMapper(mapper);
         axisRingActors_[i]->GetProperty()->SetOpacity(1.0);
