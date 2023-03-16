@@ -45,6 +45,9 @@ movableAxesRepresentation::movableAxesRepresentation()
             mapper->SetInputConnection(paramSource->GetOutputPort());
 
             axisRingActors_[i]->SetMapper(mapper);
+            axisRingActors_[i]->GetProperty()->SetDiffuse(0.8);
+            axisRingActors_[i]->GetProperty()->SetSpecular(0.5);
+            axisRingActors_[i]->GetProperty()->SetSpecularPower(30.0);
             axisRingActors_[i]->GetProperty()->SetOpacity(1.0);
             axisRingActors_[i]->GetProperty()->SetLineWidth(5);
             axisRingActors_[i]->GetProperty()->SetRepresentationToWireframe();
@@ -67,6 +70,9 @@ movableAxesRepresentation::movableAxesRepresentation()
             mapper->SetInputConnection(coneSource->GetOutputPort());
 
             axisRingConeActors_[i]->SetMapper(mapper);
+            axisRingConeActors_[i]->GetProperty()->SetDiffuse(0.8);
+            axisRingConeActors_[i]->GetProperty()->SetSpecular(0.5);
+            axisRingConeActors_[i]->GetProperty()->SetSpecularPower(30.0);
             axisRingConeActors_[i]->GetProperty()->SetColor(
                 axisNormalColor_[i][0], axisNormalColor_[i][1],
                 axisNormalColor_[i][2]);
@@ -165,6 +171,14 @@ void movableAxesRepresentation::PlaceWidget(double bds[6])
 int movableAxesRepresentation::ComputeInteractionState(int x, int y,
                                                        int vtkNotUsed(modify))
 {
+    for (auto i = 0; i < 3; i++)
+    {
+        axisRingActors_[i]->GetProperty()->SetDiffuse(0.8);
+        axisRingActors_[i]->GetProperty()->SetSpecular(0.5);
+        axisRingConeActors_[i]->GetProperty()->SetDiffuse(0.8);
+        axisRingConeActors_[i]->GetProperty()->SetSpecular(0.5);
+    }
+
     if (!this->Renderer || !this->Renderer->IsInViewport(x, y))
     {
         this->InteractionState = INTERACTIONSTATE::outside;
@@ -181,16 +195,31 @@ int movableAxesRepresentation::ComputeInteractionState(int x, int y,
             currActor_ == axisRingConeActors_[0])
         {
             this->InteractionState = INTERACTIONSTATE::onXRing;
+
+            axisRingActors_[0]->GetProperty()->SetDiffuse(1.0);
+            axisRingActors_[0]->GetProperty()->SetSpecular(0.0);
+            axisRingConeActors_[0]->GetProperty()->SetDiffuse(1.0);
+            axisRingConeActors_[0]->GetProperty()->SetSpecular(0.0);
         }
         else if (currActor_ == axisRingActors_[1] ||
                  currActor_ == axisRingConeActors_[1])
         {
             this->InteractionState = INTERACTIONSTATE::onYRing;
+
+            axisRingActors_[1]->GetProperty()->SetDiffuse(1.0);
+            axisRingActors_[1]->GetProperty()->SetSpecular(0.0);
+            axisRingConeActors_[1]->GetProperty()->SetDiffuse(1.0);
+            axisRingConeActors_[1]->GetProperty()->SetSpecular(0.0);
         }
         else if (currActor_ == axisRingActors_[2] ||
                  currActor_ == axisRingConeActors_[2])
         {
             this->InteractionState = INTERACTIONSTATE::onZRing;
+
+            axisRingActors_[2]->GetProperty()->SetDiffuse(1.0);
+            axisRingActors_[2]->GetProperty()->SetSpecular(0.0);
+            axisRingConeActors_[2]->GetProperty()->SetDiffuse(1.0);
+            axisRingConeActors_[2]->GetProperty()->SetSpecular(0.0);
         }
     }
     else
