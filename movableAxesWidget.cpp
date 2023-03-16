@@ -129,6 +129,25 @@ void movableAxesWidget::SelectAction(vtkAbstractWidget *w)
     {
         return;
     }
+
+    const int x = self->Interactor->GetEventPosition()[0];
+    const int y = self->Interactor->GetEventPosition()[1];
+
+    self->state_ = movableAxesWidget::WIDGETSTATE::active;
+
+    self->GrabFocus(self->EventCallbackCommand);
+
+    double eventPos[2];
+    eventPos[0] = static_cast<double>(x);
+    eventPos[1] = static_cast<double>(y);
+    reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
+        ->StartWidgetInteraction(eventPos);
+
+    // start the interaction
+    self->EventCallbackCommand->SetAbortFlag(1);
+    self->StartInteraction();
+    self->InvokeEvent(vtkCommand::StartInteractionEvent, nullptr);
+    self->Render();
 }
 void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
 {
@@ -148,25 +167,30 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         int cursorChanged = 0;
         std::cout << "currState: " << currState << std::endl;
 
-        if (currState == movableAxesRepresentation::INTERACTIONSTATE::outside)
         {
-            cursorChanged = self->RequestCursorShape(VTK_CURSOR_DEFAULT);
-        }
-        else
-        {
-            cursorChanged = self->RequestCursorShape(VTK_CURSOR_HAND);
+            if (currState ==
+                movableAxesRepresentation::INTERACTIONSTATE::outside)
+            {
+                cursorChanged = self->RequestCursorShape(VTK_CURSOR_DEFAULT);
+            }
+            else
+            {
+                cursorChanged = self->RequestCursorShape(VTK_CURSOR_HAND);
 
-            // if (currState ==
-            //         movableAxesRepresentation::INTERACTIONSTATE::onXRing ||
-            //     currState ==
-            //         movableAxesRepresentation::INTERACTIONSTATE::onYRing ||
-            //     currState ==
-            //         movableAxesRepresentation::INTERACTIONSTATE::onZRing)
-            // {
-            //     self->Point1Widget->SetEnabled(1);
-            // }
+                // if (currState ==
+                //         movableAxesRepresentation::INTERACTIONSTATE::onXRing
+                //         ||
+                //     currState ==
+                //         movableAxesRepresentation::INTERACTIONSTATE::onYRing
+                //         ||
+                //     currState ==
+                //         movableAxesRepresentation::INTERACTIONSTATE::onZRing)
+                // {
+                // }
+            }
         }
-        self->Interactor->Enable();
+
+        self->Interactor->Enable();  // avoid extra renders
 
         if (cursorChanged || prevState != currState)
         {

@@ -2,6 +2,7 @@
 #include <vtkAssemblyPath.h>
 #include <vtkCallbackCommand.h>
 #include <vtkCellPicker.h>
+#include <vtkConeSource.h>
 #include <vtkInteractorObserver.h>
 #include <vtkObjectFactory.h>
 #include <vtkParametricFunctionSource.h>
@@ -19,30 +20,57 @@ vtkStandardNewMacro(movableAxesRepresentation);
 
 movableAxesRepresentation::movableAxesRepresentation()
 {
+    const std::array<std::array<double, 3>, 3> coneDirection = {
+        {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}}};
+
+    const double ringRadius = 0.5;
+    const double ringSectionRadius = 0.025;
+
     for (auto i = 0; i < 3; i++)
     {
-        axisRingActors_[i] = vtkSmartPointer<vtkActor>::New();
+        {
+            axisRingActors_[i] = vtkSmartPointer<vtkActor>::New();
 
-        vtkNew<vtkParametricTorus> paramTorus;
-        paramTorus->SetRingRadius(0.5);
-        paramTorus->SetCrossSectionRadius(0.025);
+            vtkNew<vtkParametricTorus> paramTorus;
+            paramTorus->SetRingRadius(ringRadius);
+            paramTorus->SetCrossSectionRadius(ringSectionRadius);
 
-        vtkNew<vtkParametricFunctionSource> paramSource;
-        paramSource->SetParametricFunction(paramTorus);
-        paramSource->SetUResolution(60);
-        paramSource->SetVResolution(15);
-        paramSource->Update();
+            vtkNew<vtkParametricFunctionSource> paramSource;
+            paramSource->SetParametricFunction(paramTorus);
+            paramSource->SetUResolution(60);
+            paramSource->SetVResolution(15);
+            paramSource->Update();
 
-        vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputConnection(paramSource->GetOutputPort());
+            vtkNew<vtkPolyDataMapper> mapper;
+            mapper->SetInputConnection(paramSource->GetOutputPort());
 
-        axisRingActors_[i]->SetMapper(mapper);
-        axisRingActors_[i]->GetProperty()->SetOpacity(1.0);
-        axisRingActors_[i]->GetProperty()->SetLineWidth(5);
-        axisRingActors_[i]->GetProperty()->SetRepresentationToWireframe();
-        axisRingActors_[i]->GetProperty()->SetColor(axisNormalColor_[i][0],
-                                                    axisNormalColor_[i][1],
-                                                    axisNormalColor_[i][2]);
+            axisRingActors_[i]->SetMapper(mapper);
+            axisRingActors_[i]->GetProperty()->SetOpacity(1.0);
+            axisRingActors_[i]->GetProperty()->SetLineWidth(5);
+            axisRingActors_[i]->GetProperty()->SetRepresentationToWireframe();
+            axisRingActors_[i]->GetProperty()->SetColor(axisNormalColor_[i][0],
+                                                        axisNormalColor_[i][1],
+                                                        axisNormalColor_[i][2]);
+        }
+
+        {
+            axisRingConeActors_[i] = vtkSmartPointer<vtkActor>::New();
+
+            vtkNew<vtkConeSource> coneSource;
+            coneSource->SetResolution(20);
+            coneSource->SetHeight(0.25);
+            coneSource->SetAngle(20);
+            coneSource->SetDirection(coneDirection[i].data());
+            coneSource->Update();
+
+            vtkNew<vtkPolyDataMapper> mapper;
+            mapper->SetInputConnection(coneSource->GetOutputPort());
+
+            axisRingConeActors_[i]->SetMapper(mapper);
+            axisRingConeActors_[i]->GetProperty()->SetColor(
+                axisNormalColor_[i][0], axisNormalColor_[i][1],
+                axisNormalColor_[i][2]);
+        }
     }
 
     {
@@ -66,11 +94,33 @@ movableAxesRepresentation::movableAxesRepresentation()
     }
 
     {
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+        trans->Translate(0.0, 0.0, -ringRadius);
+        axisRingConeActors_[0]->SetUserTransform(trans);
+    }
+
+    {
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+        trans->Translate(-ringRadius, 0.0, 0.0);
+        axisRingConeActors_[1]->SetUserTransform(trans);
+    }
+
+    {
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+        trans->Translate(0.0, -ringRadius, 0.0);
+        axisRingConeActors_[2]->SetUserTransform(trans);
+    }
+
+    {
         picker_ = vtkSmartPointer<vtkCellPicker>::New();
         picker_->SetTolerance(0.001);
         for (auto i = 0; i < 3; i++)
         {
             picker_->AddPickList(axisRingActors_[i]);
+            picker_->AddPickList(axisRingConeActors_[i]);
         }
         picker_->PickFromListOn();
     }
@@ -97,6 +147,11 @@ void movableAxesRepresentation::SetRenderer(vtkRenderer *ren)
 
 void movableAxesRepresentation::StartWidgetInteraction(double e[2])
 {
+    startEventPosition_ = {e[0], e[1], 0.0};
+    lastEventPosition_ = {e[0], e[1], 0.0};
+
+    this->ComputeInteractionState(static_cast<int>(e[0]),
+                                  static_cast<int>(e[1]), 0);
 }
 
 void movableAxesRepresentation::WidgetInteraction(double e[2])
@@ -122,15 +177,18 @@ int movableAxesRepresentation::ComputeInteractionState(int x, int y,
         currActor_ =
             reinterpret_cast<vtkActor *>(path->GetFirstNode()->GetViewProp());
 
-        if (currActor_ == axisRingActors_[0])
+        if (currActor_ == axisRingActors_[0] ||
+            currActor_ == axisRingConeActors_[0])
         {
             this->InteractionState = INTERACTIONSTATE::onXRing;
         }
-        else if (currActor_ == axisRingActors_[1])
+        else if (currActor_ == axisRingActors_[1] ||
+                 currActor_ == axisRingConeActors_[1])
         {
             this->InteractionState = INTERACTIONSTATE::onYRing;
         }
-        else if (currActor_ == axisRingActors_[2])
+        else if (currActor_ == axisRingActors_[2] ||
+                 currActor_ == axisRingConeActors_[2])
         {
             this->InteractionState = INTERACTIONSTATE::onZRing;
         }
@@ -170,6 +228,7 @@ void movableAxesRepresentation::GetActors(vtkPropCollection *pc)
     for (auto i = 0; i < 3; i++)
     {
         axisRingActors_[i]->GetActors(pc);
+        axisRingConeActors_[i]->GetActors(pc);
     }
 }
 

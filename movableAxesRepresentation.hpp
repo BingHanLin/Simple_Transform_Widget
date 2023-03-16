@@ -64,10 +64,15 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
     std::array<vtkSmartPointer<vtkActor>, 3> axisRingActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> axisRingConeActors_;
+
     std::array<vtkSmartPointer<vtkMatrix4x4>, 3> axisRingInitMatrix_;
 
     vtkSmartPointer<vtkCellPicker> picker_;
     vtkActor *currActor_ = nullptr;
+
+    std::array<double, 3> startEventPosition_;
+    std::array<double, 3> lastEventPosition_;
 
     movableAxesRepresentation(const movableAxesRepresentation &) = delete;
     void operator=(const movableAxesRepresentation &) = delete;
