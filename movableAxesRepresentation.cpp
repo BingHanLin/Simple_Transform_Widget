@@ -243,7 +243,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
 
     double prevPickedWorldPoint[4];
     vtkInteractorObserver::ComputeDisplayToWorld(
-        this->Renderer, startEventPosition_[0], startEventPosition_[1], 0,
+        this->Renderer, lastEventPosition_[0], lastEventPosition_[1], 0,
         prevPickedWorldPoint);
 
     double currPickedWorldPoint[4];
@@ -302,25 +302,25 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 double projectedPrevPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(prevPickedWorldPoint, normal);
+                        vtkMath::Dot(originPrevPickedWorldPoint, normal);
                     projectedPrevPickedPoint[0] =
-                        prevPickedWorldPoint[0] - dist * normal[0];
+                        originPrevPickedWorldPoint[0] - dist * normal[0];
                     projectedPrevPickedPoint[1] =
-                        prevPickedWorldPoint[1] - dist * normal[1];
+                        originPrevPickedWorldPoint[1] - dist * normal[1];
                     projectedPrevPickedPoint[2] =
-                        prevPickedWorldPoint[2] - dist * normal[2];
+                        originPrevPickedWorldPoint[2] - dist * normal[2];
                 }
 
                 double projectedCurrPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(currPickedWorldPoint, normal);
+                        vtkMath::Dot(originCurrPickedWorldPoint, normal);
                     projectedCurrPickedPoint[0] =
-                        currPickedWorldPoint[0] - dist * normal[0];
+                        originCurrPickedWorldPoint[0] - dist * normal[0];
                     projectedCurrPickedPoint[1] =
-                        currPickedWorldPoint[1] - dist * normal[1];
+                        originCurrPickedWorldPoint[1] - dist * normal[1];
                     projectedCurrPickedPoint[2] =
-                        currPickedWorldPoint[2] - dist * normal[2];
+                        originCurrPickedWorldPoint[2] - dist * normal[2];
                 }
 
                 vtkMath::Normalize(projectedPrevPickedPoint);
@@ -364,25 +364,25 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 double projectedPrevPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(prevPickedWorldPoint, normal);
+                        vtkMath::Dot(originPrevPickedWorldPoint, normal);
                     projectedPrevPickedPoint[0] =
-                        prevPickedWorldPoint[0] - dist * normal[0];
+                        originPrevPickedWorldPoint[0] - dist * normal[0];
                     projectedPrevPickedPoint[1] =
-                        prevPickedWorldPoint[1] - dist * normal[1];
+                        originPrevPickedWorldPoint[1] - dist * normal[1];
                     projectedPrevPickedPoint[2] =
-                        prevPickedWorldPoint[2] - dist * normal[2];
+                        originPrevPickedWorldPoint[2] - dist * normal[2];
                 }
 
                 double projectedCurrPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(currPickedWorldPoint, normal);
+                        vtkMath::Dot(originCurrPickedWorldPoint, normal);
                     projectedCurrPickedPoint[0] =
-                        currPickedWorldPoint[0] - dist * normal[0];
+                        originCurrPickedWorldPoint[0] - dist * normal[0];
                     projectedCurrPickedPoint[1] =
-                        currPickedWorldPoint[1] - dist * normal[1];
+                        originCurrPickedWorldPoint[1] - dist * normal[1];
                     projectedCurrPickedPoint[2] =
-                        currPickedWorldPoint[2] - dist * normal[2];
+                        originCurrPickedWorldPoint[2] - dist * normal[2];
                 }
 
                 vtkMath::Normalize(projectedPrevPickedPoint);
@@ -450,7 +450,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 double projectedPrevPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(prevPickedWorldPoint, direction);
+                        vtkMath::Dot(originPrevPickedWorldPoint, direction);
                     projectedPrevPickedPoint[0] = dist * direction[0];
                     projectedPrevPickedPoint[1] = dist * direction[1];
                     projectedPrevPickedPoint[2] = dist * direction[2];
@@ -459,7 +459,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 double projectedCurrPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(currPickedWorldPoint, direction);
+                        vtkMath::Dot(originCurrPickedWorldPoint, direction);
                     projectedCurrPickedPoint[0] = dist * direction[0];
                     projectedCurrPickedPoint[1] = dist * direction[1];
                     projectedCurrPickedPoint[2] = dist * direction[2];
@@ -499,7 +499,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 double projectedPrevPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(prevPickedWorldPoint, direction);
+                        vtkMath::Dot(originPrevPickedWorldPoint, direction);
                     projectedPrevPickedPoint[0] = dist * direction[0];
                     projectedPrevPickedPoint[1] = dist * direction[1];
                     projectedPrevPickedPoint[2] = dist * direction[2];
@@ -508,7 +508,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 double projectedCurrPickedPoint[3];
                 {
                     const double dist =
-                        vtkMath::Dot(currPickedWorldPoint, direction);
+                        vtkMath::Dot(originCurrPickedWorldPoint, direction);
                     projectedCurrPickedPoint[0] = dist * direction[0];
                     projectedCurrPickedPoint[1] = dist * direction[1];
                     projectedCurrPickedPoint[2] = dist * direction[2];
