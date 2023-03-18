@@ -5,7 +5,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkWidgetRepresentation.h>
 
-class vtkActor;
+class vtkAssembly;
 class vtkCellPicker;
 class movableAxesRepresentation : public vtkWidgetRepresentation
 {
@@ -63,13 +63,11 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
     const std::array<std::array<double, 3>, 3> axisNormalColor_ = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
-    std::array<vtkSmartPointer<vtkActor>, 3> axisRingActors_;
-    std::array<vtkSmartPointer<vtkActor>, 3> axisRingConeActors_;
-
+    std::array<vtkSmartPointer<vtkAssembly>, 3> axisRingActors_;
     std::array<vtkSmartPointer<vtkMatrix4x4>, 3> axisRingInitMatrix_;
 
     vtkSmartPointer<vtkCellPicker> picker_;
-    vtkActor *currActor_ = nullptr;
+    vtkProp3D *currActor_ = nullptr;
 
     std::array<double, 3> startEventPosition_;
     std::array<double, 3> lastEventPosition_;

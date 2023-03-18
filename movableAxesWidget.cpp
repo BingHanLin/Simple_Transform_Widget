@@ -25,6 +25,10 @@ movableAxesWidget::movableAxesWidget()
             vtkCommand::LeftButtonPressEvent, vtkWidgetEvent::Select, this,
             movableAxesWidget::SelectAction);
 
+        this->CallbackMapper->SetCallbackMethod(
+            vtkCommand::LeftButtonReleaseEvent, vtkWidgetEvent::EndSelect, this,
+            movableAxesWidget::EndSelectAction);
+
         this->CallbackMapper->SetCallbackMethod(vtkCommand::MouseMoveEvent,
                                                 vtkWidgetEvent::Move, this,
                                                 movableAxesWidget::MoveAction);
@@ -81,8 +85,8 @@ void movableAxesWidget::SetEnabled(int enabling)
             const int nProps = propsCollection->GetNumberOfItems();
             for (int i = 0; i < nProps; i++)
             {
-                vtkActor *actor =
-                    vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
+                vtkProp *actor =
+                    vtkProp::SafeDownCast(propsCollection->GetNextProp(sIt));
                 if (actor != nullptr)
                 {
                     this->CurrentRenderer->AddActor(actor);
@@ -149,6 +153,26 @@ void movableAxesWidget::SelectAction(vtkAbstractWidget *w)
     self->InvokeEvent(vtkCommand::StartInteractionEvent, nullptr);
     self->Render();
 }
+
+void movableAxesWidget::EndSelectAction(vtkAbstractWidget *w)
+{
+    auto self = reinterpret_cast<movableAxesWidget *>(w);
+    if (self->state_ == movableAxesWidget::WIDGETSTATE::start)
+    {
+        return;
+    }
+
+    // Return state to not active
+    self->state_ = movableAxesWidget::WIDGETSTATE::start;
+    self->ReleaseFocus();
+    self->InvokeEvent(vtkCommand::LeftButtonReleaseEvent,
+                      nullptr);  // handles observe this
+    self->EventCallbackCommand->SetAbortFlag(1);
+    self->InvokeEvent(vtkCommand::EndInteractionEvent, nullptr);
+    self->EndInteraction();
+    self->Render();
+}
+
 void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
 {
     std::cout << "MoveAction......." << std::endl;
@@ -199,5 +223,18 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
     }
     else  // if ( self->WidgetState == vtkLineWidget2::Active )
     {
+        double e[2];
+        e[0] = static_cast<double>(x);
+        e[1] = static_cast<double>(y);
+
+        self->InvokeEvent(vtkCommand::MouseMoveEvent,
+                          nullptr);  // handles observe this
+
+        reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
+            ->WidgetInteraction(e);
+
+        self->InvokeEvent(vtkCommand::InteractionEvent, nullptr);
+        self->EventCallbackCommand->SetAbortFlag(1);
+        self->Render();
     }
 }

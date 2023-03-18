@@ -53,6 +53,7 @@ class movableAxesWidget : public vtkAbstractWidget
     ~movableAxesWidget() override;
 
     static void SelectAction(vtkAbstractWidget *w);
+    static void EndSelectAction(vtkAbstractWidget *w);
     static void MoveAction(vtkAbstractWidget *w);
 
    private:

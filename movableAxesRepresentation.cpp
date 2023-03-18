@@ -1,4 +1,5 @@
 #include <vtkActor.h>
+#include <vtkAssembly.h>
 #include <vtkAssemblyPath.h>
 #include <vtkCallbackCommand.h>
 #include <vtkCellPicker.h>
@@ -26,10 +27,13 @@ movableAxesRepresentation::movableAxesRepresentation()
     const double ringRadius = 0.5;
     const double ringSectionRadius = 0.025;
 
+    std::array<vtkSmartPointer<vtkActor>, 3> axisRingCircleActors;
+    std::array<vtkSmartPointer<vtkActor>, 3> axisRingConeActors;
+
     for (auto i = 0; i < 3; i++)
     {
         {
-            axisRingActors_[i] = vtkSmartPointer<vtkActor>::New();
+            axisRingCircleActors[i] = vtkSmartPointer<vtkActor>::New();
 
             vtkNew<vtkParametricTorus> paramTorus;
             paramTorus->SetRingRadius(ringRadius);
@@ -44,20 +48,22 @@ movableAxesRepresentation::movableAxesRepresentation()
             vtkNew<vtkPolyDataMapper> mapper;
             mapper->SetInputConnection(paramSource->GetOutputPort());
 
-            axisRingActors_[i]->SetMapper(mapper);
-            axisRingActors_[i]->GetProperty()->SetDiffuse(0.8);
-            axisRingActors_[i]->GetProperty()->SetSpecular(0.5);
-            axisRingActors_[i]->GetProperty()->SetSpecularPower(30.0);
-            axisRingActors_[i]->GetProperty()->SetOpacity(1.0);
-            axisRingActors_[i]->GetProperty()->SetLineWidth(5);
-            axisRingActors_[i]->GetProperty()->SetRepresentationToWireframe();
-            axisRingActors_[i]->GetProperty()->SetColor(axisNormalColor_[i][0],
-                                                        axisNormalColor_[i][1],
-                                                        axisNormalColor_[i][2]);
+            axisRingCircleActors[i]->SetMapper(mapper);
+            axisRingCircleActors[i]->GetProperty()->SetDiffuse(0.8);
+            axisRingCircleActors[i]->GetProperty()->SetSpecular(0.5);
+            axisRingCircleActors[i]->GetProperty()->SetSpecularPower(30.0);
+            axisRingCircleActors[i]->GetProperty()->SetOpacity(1.0);
+            axisRingCircleActors[i]->GetProperty()->SetLineWidth(5);
+            axisRingCircleActors[i]
+                ->GetProperty()
+                ->SetRepresentationToWireframe();
+            axisRingCircleActors[i]->GetProperty()->SetColor(
+                axisNormalColor_[i][0], axisNormalColor_[i][1],
+                axisNormalColor_[i][2]);
         }
 
         {
-            axisRingConeActors_[i] = vtkSmartPointer<vtkActor>::New();
+            axisRingConeActors[i] = vtkSmartPointer<vtkActor>::New();
 
             vtkNew<vtkConeSource> coneSource;
             coneSource->SetResolution(20);
@@ -69,11 +75,11 @@ movableAxesRepresentation::movableAxesRepresentation()
             vtkNew<vtkPolyDataMapper> mapper;
             mapper->SetInputConnection(coneSource->GetOutputPort());
 
-            axisRingConeActors_[i]->SetMapper(mapper);
-            axisRingConeActors_[i]->GetProperty()->SetDiffuse(0.8);
-            axisRingConeActors_[i]->GetProperty()->SetSpecular(0.5);
-            axisRingConeActors_[i]->GetProperty()->SetSpecularPower(30.0);
-            axisRingConeActors_[i]->GetProperty()->SetColor(
+            axisRingConeActors[i]->SetMapper(mapper);
+            axisRingConeActors[i]->GetProperty()->SetDiffuse(0.8);
+            axisRingConeActors[i]->GetProperty()->SetSpecular(0.5);
+            axisRingConeActors[i]->GetProperty()->SetSpecularPower(30.0);
+            axisRingConeActors[i]->GetProperty()->SetColor(
                 axisNormalColor_[i][0], axisNormalColor_[i][1],
                 axisNormalColor_[i][2]);
         }
@@ -83,41 +89,55 @@ movableAxesRepresentation::movableAxesRepresentation()
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
         trans->RotateY(90);
-        axisRingActors_[0]->SetUserTransform(trans);
+        axisRingCircleActors[0]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
         trans->RotateX(90);
-        axisRingActors_[1]->SetUserTransform(trans);
+        axisRingCircleActors[1]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        axisRingActors_[2]->SetUserTransform(trans);
+        axisRingCircleActors[2]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
         trans->Translate(0.0, 0.0, -ringRadius);
-        axisRingConeActors_[0]->SetUserTransform(trans);
+        axisRingConeActors[0]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
         trans->Translate(-ringRadius, 0.0, 0.0);
-        axisRingConeActors_[1]->SetUserTransform(trans);
+        axisRingConeActors[1]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
         trans->Translate(0.0, -ringRadius, 0.0);
-        axisRingConeActors_[2]->SetUserTransform(trans);
+        axisRingConeActors[2]->SetUserTransform(trans);
+    }
+
+    for (auto i = 0; i < 3; i++)
+    {
+        axisRingActors_[i] = vtkSmartPointer<vtkAssembly>::New();
+        axisRingActors_[i]->AddPart(axisRingCircleActors[i]);
+        axisRingActors_[i]->AddPart(axisRingConeActors[i]);
+
+        axisRingActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        axisRingActors_[i]->SetUserTransform(trans);
     }
 
     {
@@ -126,7 +146,6 @@ movableAxesRepresentation::movableAxesRepresentation()
         for (auto i = 0; i < 3; i++)
         {
             picker_->AddPickList(axisRingActors_[i]);
-            picker_->AddPickList(axisRingConeActors_[i]);
         }
         picker_->PickFromListOn();
     }
@@ -162,6 +181,96 @@ void movableAxesRepresentation::StartWidgetInteraction(double e[2])
 
 void movableAxesRepresentation::WidgetInteraction(double e[2])
 {
+    std::cout << "WidgetInteraction: " << e[0] << ", " << e[1] << std::endl;
+
+    double prevPickedWorldPoint[4];
+    vtkInteractorObserver::ComputeDisplayToWorld(
+        this->Renderer, startEventPosition_[0], startEventPosition_[1], 0,
+        prevPickedWorldPoint);
+
+    double currPickedWorldPoint[4];
+    vtkInteractorObserver::ComputeDisplayToWorld(this->Renderer, e[0], e[1], 0,
+                                                 currPickedWorldPoint);
+
+    if (this->InteractionState == INTERACTIONSTATE::onXRing)
+    {
+        std::cout << "prevPickedWorldPoint: " << prevPickedWorldPoint[0] << ", "
+                  << prevPickedWorldPoint[1] << ", " << prevPickedWorldPoint[2]
+                  << std::endl;
+
+        std::cout << "currPickedWorldPoint: " << currPickedWorldPoint[0] << ", "
+                  << currPickedWorldPoint[1] << ", " << currPickedWorldPoint[2]
+                  << std::endl;
+
+        {
+            vtkMatrix4x4 *originMatrix =
+                this->axisRingActors_[0]->GetUserMatrix();
+
+            vtkNew<vtkMatrix4x4> newMatrix;
+            {
+                vtkNew<vtkMatrix4x4> invertedMatrix;
+                vtkMatrix4x4::Invert(originMatrix, invertedMatrix);
+
+                auto pos =
+                    invertedMatrix->MultiplyDoublePoint(prevPickedWorldPoint);
+                double originPrevPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
+
+                pos = invertedMatrix->MultiplyDoublePoint(currPickedWorldPoint);
+                double originCurrPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
+
+                double normal[3];
+                normal[0] = 1.0;
+                normal[1] = 0.0;
+                normal[2] = 0.0;
+
+                double projectedPrevPickedPoint[3] = {
+                    0.0, originPrevPickedWorldPoint[1],
+                    originPrevPickedWorldPoint[2]};
+
+                double projectedCurrPickedPoint[3] = {
+                    0.0, originCurrPickedWorldPoint[1],
+                    originCurrPickedWorldPoint[2]};
+
+                vtkMath::Normalize(projectedPrevPickedPoint);
+                vtkMath::Normalize(projectedCurrPickedPoint);
+
+                double axis[3];
+                vtkMath::Cross(projectedPrevPickedPoint,
+                               projectedCurrPickedPoint, axis);
+
+                const double angleRadians = std::acos(vtkMath::Dot(
+                    projectedPrevPickedPoint, projectedCurrPickedPoint));
+
+                std::cout << "projectedPrevPickedPoint: "
+                          << projectedPrevPickedPoint[0] << ", "
+                          << projectedPrevPickedPoint[1] << ", "
+                          << projectedPrevPickedPoint[2] << std::endl;
+
+                std::cout << "projectedCurrPickedPoint: "
+                          << projectedCurrPickedPoint[0] << ", "
+                          << projectedCurrPickedPoint[1] << ", "
+                          << projectedCurrPickedPoint[2] << std::endl;
+
+                const double angleDegrees =
+                    vtkMath::DegreesFromRadians(angleRadians);
+
+                std::cout << "axis: " << axis[0] << ", " << axis[1] << ", "
+                          << axis[2] << std::endl;
+
+                std::cout << "angleDegrees: " << angleDegrees << std::endl;
+                vtkNew<vtkTransform> trans;
+                trans->SetMatrix(originMatrix);
+                trans->RotateWXYZ(angleDegrees, axis);
+                newMatrix->DeepCopy(trans->GetMatrix());
+            }
+            this->axisRingActors_[0]->SetUserMatrix(newMatrix);
+        }
+    }
+
+    lastEventPosition_ = {e[0], e[1], 0.0};
+
+    this->Modified();
+    this->BuildRepresentation();
 }
 
 void movableAxesRepresentation::PlaceWidget(double bds[6])
@@ -173,10 +282,22 @@ int movableAxesRepresentation::ComputeInteractionState(int x, int y,
 {
     for (auto i = 0; i < 3; i++)
     {
-        axisRingActors_[i]->GetProperty()->SetDiffuse(0.8);
-        axisRingActors_[i]->GetProperty()->SetSpecular(0.5);
-        axisRingConeActors_[i]->GetProperty()->SetDiffuse(0.8);
-        axisRingConeActors_[i]->GetProperty()->SetSpecular(0.5);
+        vtkNew<vtkPropCollection> propsCollection;
+        axisRingActors_[i]->GetActors(propsCollection);
+
+        vtkCollectionSimpleIterator sIt;
+        propsCollection->InitTraversal(sIt);
+        const int nProps = propsCollection->GetNumberOfItems();
+        for (int i = 0; i < nProps; i++)
+        {
+            vtkActor *actor =
+                vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
+            if (actor != nullptr)
+            {
+                actor->GetProperty()->SetDiffuse(0.8);
+                actor->GetProperty()->SetSpecular(0.5);
+            }
+        }
     }
 
     if (!this->Renderer || !this->Renderer->IsInViewport(x, y))
@@ -189,37 +310,36 @@ int movableAxesRepresentation::ComputeInteractionState(int x, int y,
     if (path != nullptr)
     {
         currActor_ =
-            reinterpret_cast<vtkActor *>(path->GetFirstNode()->GetViewProp());
+            reinterpret_cast<vtkProp3D *>(path->GetFirstNode()->GetViewProp());
 
-        if (currActor_ == axisRingActors_[0] ||
-            currActor_ == axisRingConeActors_[0])
+        if (currActor_ == axisRingActors_[0])
         {
             this->InteractionState = INTERACTIONSTATE::onXRing;
-
-            axisRingActors_[0]->GetProperty()->SetDiffuse(1.0);
-            axisRingActors_[0]->GetProperty()->SetSpecular(0.0);
-            axisRingConeActors_[0]->GetProperty()->SetDiffuse(1.0);
-            axisRingConeActors_[0]->GetProperty()->SetSpecular(0.0);
         }
-        else if (currActor_ == axisRingActors_[1] ||
-                 currActor_ == axisRingConeActors_[1])
+        else if (currActor_ == axisRingActors_[1])
         {
             this->InteractionState = INTERACTIONSTATE::onYRing;
-
-            axisRingActors_[1]->GetProperty()->SetDiffuse(1.0);
-            axisRingActors_[1]->GetProperty()->SetSpecular(0.0);
-            axisRingConeActors_[1]->GetProperty()->SetDiffuse(1.0);
-            axisRingConeActors_[1]->GetProperty()->SetSpecular(0.0);
         }
-        else if (currActor_ == axisRingActors_[2] ||
-                 currActor_ == axisRingConeActors_[2])
+        else if (currActor_ == axisRingActors_[2])
         {
             this->InteractionState = INTERACTIONSTATE::onZRing;
+        }
 
-            axisRingActors_[2]->GetProperty()->SetDiffuse(1.0);
-            axisRingActors_[2]->GetProperty()->SetSpecular(0.0);
-            axisRingConeActors_[2]->GetProperty()->SetDiffuse(1.0);
-            axisRingConeActors_[2]->GetProperty()->SetSpecular(0.0);
+        vtkNew<vtkPropCollection> propsCollection;
+        currActor_->GetActors(propsCollection);
+
+        vtkCollectionSimpleIterator sIt;
+        propsCollection->InitTraversal(sIt);
+        const int nProps = propsCollection->GetNumberOfItems();
+        for (int i = 0; i < nProps; i++)
+        {
+            vtkActor *actor =
+                vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
+            if (actor != nullptr)
+            {
+                actor->GetProperty()->SetDiffuse(1.0);
+                actor->GetProperty()->SetSpecular(0.0);
+            }
         }
     }
     else
@@ -256,8 +376,7 @@ void movableAxesRepresentation::GetActors(vtkPropCollection *pc)
 {
     for (auto i = 0; i < 3; i++)
     {
-        axisRingActors_[i]->GetActors(pc);
-        axisRingConeActors_[i]->GetActors(pc);
+        pc->AddItem(axisRingActors_[i]);
     }
 }
 
