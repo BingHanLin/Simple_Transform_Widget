@@ -42,7 +42,7 @@ movableAxesRepresentation::movableAxesRepresentation()
             vtkNew<vtkParametricFunctionSource> paramSource;
             paramSource->SetParametricFunction(paramTorus);
             paramSource->SetUResolution(60);
-            paramSource->SetVResolution(15);
+            paramSource->SetVResolution(20);
             paramSource->Update();
 
             vtkNew<vtkPolyDataMapper> mapper;
@@ -53,10 +53,10 @@ movableAxesRepresentation::movableAxesRepresentation()
             axisRingCircleActors[i]->GetProperty()->SetSpecular(0.5);
             axisRingCircleActors[i]->GetProperty()->SetSpecularPower(30.0);
             axisRingCircleActors[i]->GetProperty()->SetOpacity(1.0);
-            axisRingCircleActors[i]->GetProperty()->SetLineWidth(5);
-            axisRingCircleActors[i]
-                ->GetProperty()
-                ->SetRepresentationToWireframe();
+            // axisRingCircleActors[i]->GetProperty()->SetLineWidth(10);
+            // axisRingCircleActors[i]
+            // ->GetProperty()
+            // ->SetRepresentationToWireframe();
             axisRingCircleActors[i]->GetProperty()->SetColor(
                 axisNormalColor_[i][0], axisNormalColor_[i][1],
                 axisNormalColor_[i][2]);
@@ -66,8 +66,8 @@ movableAxesRepresentation::movableAxesRepresentation()
             axisRingConeActors[i] = vtkSmartPointer<vtkActor>::New();
 
             vtkNew<vtkConeSource> coneSource;
-            coneSource->SetResolution(20);
-            coneSource->SetHeight(0.25);
+            coneSource->SetResolution(30);
+            coneSource->SetHeight(ringSectionRadius * 10);
             coneSource->SetAngle(20);
             coneSource->SetDirection(coneDirection[i].data());
             coneSource->Update();
@@ -192,19 +192,42 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
     vtkInteractorObserver::ComputeDisplayToWorld(this->Renderer, e[0], e[1], 0,
                                                  currPickedWorldPoint);
 
-    if (this->InteractionState == INTERACTIONSTATE::onXRing)
+    std::cout << "prevPickedWorldPoint: " << prevPickedWorldPoint[0] << ", "
+              << prevPickedWorldPoint[1] << ", " << prevPickedWorldPoint[2]
+              << std::endl;
+
+    std::cout << "currPickedWorldPoint: " << currPickedWorldPoint[0] << ", "
+              << currPickedWorldPoint[1] << ", " << currPickedWorldPoint[2]
+              << std::endl;
+
+    if (this->InteractionState == INTERACTIONSTATE::onXRing ||
+        this->InteractionState == INTERACTIONSTATE::onYRing ||
+        this->InteractionState == INTERACTIONSTATE::onZRing)
     {
-        std::cout << "prevPickedWorldPoint: " << prevPickedWorldPoint[0] << ", "
-                  << prevPickedWorldPoint[1] << ", " << prevPickedWorldPoint[2]
-                  << std::endl;
+        double normal[3];
+        if (this->InteractionState == INTERACTIONSTATE::onXRing)
+        {
+            normal[0] = 1.0;
+            normal[1] = 0.0;
+            normal[2] = 0.0;
+        }
+        else if (this->InteractionState == INTERACTIONSTATE::onYRing)
+        {
+            normal[0] = 0.0;
+            normal[1] = 1.0;
+            normal[2] = 0.0;
+        }
+        else
+        {
+            normal[0] = 0.0;
+            normal[1] = 0.0;
+            normal[2] = 1.0;
+        }
 
-        std::cout << "currPickedWorldPoint: " << currPickedWorldPoint[0] << ", "
-                  << currPickedWorldPoint[1] << ", " << currPickedWorldPoint[2]
-                  << std::endl;
-
+        for (int i = 0; i < 3; i++)
         {
             vtkMatrix4x4 *originMatrix =
-                this->axisRingActors_[0]->GetUserMatrix();
+                this->axisRingActors_[i]->GetUserMatrix();
 
             vtkNew<vtkMatrix4x4> newMatrix;
             {
@@ -218,18 +241,29 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 pos = invertedMatrix->MultiplyDoublePoint(currPickedWorldPoint);
                 double originCurrPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
 
-                double normal[3];
-                normal[0] = 1.0;
-                normal[1] = 0.0;
-                normal[2] = 0.0;
+                double projectedPrevPickedPoint[3];
+                {
+                    const double dist =
+                        vtkMath::Dot(prevPickedWorldPoint, normal);
+                    projectedPrevPickedPoint[0] =
+                        prevPickedWorldPoint[0] - dist * normal[0];
+                    projectedPrevPickedPoint[1] =
+                        prevPickedWorldPoint[1] - dist * normal[1];
+                    projectedPrevPickedPoint[2] =
+                        prevPickedWorldPoint[2] - dist * normal[2];
+                }
 
-                double projectedPrevPickedPoint[3] = {
-                    0.0, originPrevPickedWorldPoint[1],
-                    originPrevPickedWorldPoint[2]};
-
-                double projectedCurrPickedPoint[3] = {
-                    0.0, originCurrPickedWorldPoint[1],
-                    originCurrPickedWorldPoint[2]};
+                double projectedCurrPickedPoint[3];
+                {
+                    const double dist =
+                        vtkMath::Dot(currPickedWorldPoint, normal);
+                    projectedCurrPickedPoint[0] =
+                        currPickedWorldPoint[0] - dist * normal[0];
+                    projectedCurrPickedPoint[1] =
+                        currPickedWorldPoint[1] - dist * normal[1];
+                    projectedCurrPickedPoint[2] =
+                        currPickedWorldPoint[2] - dist * normal[2];
+                }
 
                 vtkMath::Normalize(projectedPrevPickedPoint);
                 vtkMath::Normalize(projectedCurrPickedPoint);
@@ -263,7 +297,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                 trans->RotateWXYZ(angleDegrees, axis);
                 newMatrix->DeepCopy(trans->GetMatrix());
             }
-            this->axisRingActors_[0]->SetUserMatrix(newMatrix);
+            this->axisRingActors_[i]->SetUserMatrix(newMatrix);
         }
     }
 
