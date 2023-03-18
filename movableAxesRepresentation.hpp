@@ -52,7 +52,10 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
         outside = 0,
         onXRing,
         onYRing,
-        onZRing
+        onZRing,
+        onXArrow,
+        onYArrow,
+        onZArrow
     };
 
    protected:
@@ -64,7 +67,7 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
     std::array<vtkSmartPointer<vtkAssembly>, 3> axisRingActors_;
-    std::array<vtkSmartPointer<vtkMatrix4x4>, 3> axisRingInitMatrix_;
+    std::array<vtkSmartPointer<vtkAssembly>, 3> axisArrowActors_;
 
     vtkSmartPointer<vtkCellPicker> picker_;
     vtkProp3D *currActor_ = nullptr;
