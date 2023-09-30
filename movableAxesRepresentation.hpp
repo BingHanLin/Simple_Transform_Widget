@@ -10,6 +10,17 @@ class vtkCellPicker;
 class movableAxesRepresentation : public vtkWidgetRepresentation
 {
    public:
+    enum INTERACTIONSTATE
+    {
+        outside = 0,
+        onXRing,
+        onYRing,
+        onZRing,
+        onXArrow,
+        onYArrow,
+        onZArrow
+    };
+
     /**
      * Instantiate the class.
      */
@@ -47,16 +58,7 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
 
     void GetActors(vtkPropCollection *pc) override;
 
-    enum INTERACTIONSTATE
-    {
-        outside = 0,
-        onXRing,
-        onYRing,
-        onZRing,
-        onXArrow,
-        onYArrow,
-        onZArrow
-    };
+    void setHoverState(const INTERACTIONSTATE state);
 
    protected:
     movableAxesRepresentation();

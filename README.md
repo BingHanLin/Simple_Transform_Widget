@@ -62,6 +62,11 @@ https://blog.csdn.net/weixin_38416696/article/details/124987253
 [VTK] Draggable coordinate axis MovableAxesWidget
 https://www.zditect.com/code/vtk-draggable-coordinate-axis-movableaxeswidget.html
 
+Virtual surgical planning using a DCIA free flap for mandibular reconstruction
+https://www.youtube.com/watch?v=7RMermYOOYY&t=96s
+
+VTK——可拖动的坐标轴MovableAxesWidget、商用
+https://blog.51cto.com/u_15926338/5979963
 
 VTKWidgets(Explain the concept and event translation table)
 https://vtk.org/Wiki/VTKWidgets

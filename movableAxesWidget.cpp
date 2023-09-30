@@ -200,19 +200,13 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
             else
             {
                 cursorChanged = self->RequestCursorShape(VTK_CURSOR_HAND);
-
-                // if (currState ==
-                //         movableAxesRepresentation::INTERACTIONSTATE::onXRing
-                //         ||
-                //     currState ==
-                //         movableAxesRepresentation::INTERACTIONSTATE::onYRing
-                //         ||
-                //     currState ==
-                //         movableAxesRepresentation::INTERACTIONSTATE::onZRing)
-                // {
-                // }
             }
         }
+
+        reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
+            ->setHoverState(
+                static_cast<movableAxesRepresentation::INTERACTIONSTATE>(
+                    currState));
 
         self->Interactor->Enable();  // avoid extra renders
 

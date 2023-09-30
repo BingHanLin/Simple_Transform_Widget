@@ -86,7 +86,7 @@ int main(int, char *[])
 
     vtkNew<vtkLineCallback> lineCallback;
 
-    myWidget->AddObserver(vtkCommand::InteractionEvent, lineCallback);
+    // myWidget->AddObserver(vtkCommand::InteractionEvent, lineCallback);
 
     // vtkCubeAxesActor Actor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
