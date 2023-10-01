@@ -175,7 +175,7 @@ void movableAxesWidget::EndSelectAction(vtkAbstractWidget *w)
 
 void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
 {
-    std::cout << "MoveAction......." << std::endl;
+    // std::cout << "MoveAction......." << std::endl;
     auto self = reinterpret_cast<movableAxesWidget *>(w);
 
     // compute some info we need for all actions
@@ -189,7 +189,7 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         const int prevState = self->WidgetRep->GetInteractionState();
         const int currState = self->WidgetRep->ComputeInteractionState(x, y);
         int cursorChanged = 0;
-        std::cout << "currState: " << currState << std::endl;
+        // std::cout << "currState: " << currState << std::endl;
 
         {
             if (currState ==

@@ -305,96 +305,134 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
     vtkInteractorObserver::ComputeDisplayToWorld(this->Renderer, e[0], e[1], 0,
                                                  currPickedWorldPoint);
 
-    std::cout << "prevPickedWorldPoint: " << prevPickedWorldPoint[0] << ", "
-              << prevPickedWorldPoint[1] << ", " << prevPickedWorldPoint[2]
-              << std::endl;
-
-    std::cout << "currPickedWorldPoint: " << currPickedWorldPoint[0] << ", "
-              << currPickedWorldPoint[1] << ", " << currPickedWorldPoint[2]
-              << std::endl;
-
     if (this->InteractionState == INTERACTIONSTATE::onXRing ||
         this->InteractionState == INTERACTIONSTATE::onYRing ||
         this->InteractionState == INTERACTIONSTATE::onZRing)
     {
-        double normal[3];
+        double originPoint[4] = {0.0, 0.0, 0.0, 1.0};
+
+        double normalAxisEndPoint[4] = {0.0, 0.0, 0.0, 1.0};
         if (this->InteractionState == INTERACTIONSTATE::onXRing)
         {
-            normal[0] = 1.0;
-            normal[1] = 0.0;
-            normal[2] = 0.0;
+            normalAxisEndPoint[0] = 1.0;
+            normalAxisEndPoint[1] = 0.0;
+            normalAxisEndPoint[2] = 0.0;
         }
         else if (this->InteractionState == INTERACTIONSTATE::onYRing)
         {
-            normal[0] = 0.0;
-            normal[1] = 1.0;
-            normal[2] = 0.0;
+            normalAxisEndPoint[0] = 0.0;
+            normalAxisEndPoint[1] = 1.0;
+            normalAxisEndPoint[2] = 0.0;
         }
         else
         {
-            normal[0] = 0.0;
-            normal[1] = 0.0;
-            normal[2] = 1.0;
+            normalAxisEndPoint[0] = 0.0;
+            normalAxisEndPoint[1] = 0.0;
+            normalAxisEndPoint[2] = 1.0;
         }
 
         for (auto actors :
              {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
               axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2]})
         {
-            vtkMatrix4x4 *originMatrix = actors->GetUserMatrix();
+            vtkMatrix4x4 *transformMatrix = actors->GetUserMatrix();
 
             vtkNew<vtkMatrix4x4> newMatrix;
             {
-                vtkNew<vtkMatrix4x4> invertedMatrix;
-                vtkMatrix4x4::Invert(originMatrix, invertedMatrix);
+                double tranformedOriginPoint[4];
+                transformMatrix->MultiplyPoint(originPoint,
+                                               tranformedOriginPoint);
 
-                auto pos =
-                    invertedMatrix->MultiplyDoublePoint(prevPickedWorldPoint);
-                double originPrevPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
-
-                pos = invertedMatrix->MultiplyDoublePoint(currPickedWorldPoint);
-                double originCurrPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
+                double tranformedNormalAxisEndPoint[4];
+                transformMatrix->MultiplyPoint(normalAxisEndPoint,
+                                               tranformedNormalAxisEndPoint);
 
                 double projectedPrevPickedPoint[3];
                 {
-                    const double dist =
-                        vtkMath::Dot(originPrevPickedWorldPoint, normal);
+                    const double vec[3] = {
+                        prevPickedWorldPoint[0] - tranformedOriginPoint[0],
+                        prevPickedWorldPoint[1] - tranformedOriginPoint[1],
+                        prevPickedWorldPoint[2] - tranformedOriginPoint[2]};
+
+                    double unitNormal[3] = {tranformedNormalAxisEndPoint[0] -
+                                                tranformedOriginPoint[0],
+                                            tranformedNormalAxisEndPoint[1] -
+                                                tranformedOriginPoint[1],
+                                            tranformedNormalAxisEndPoint[2] -
+                                                tranformedOriginPoint[2]};
+
+                    vtkMath::Normalize(unitNormal);
+
+                    const double dist = vtkMath::Dot(vec, unitNormal);
+
                     projectedPrevPickedPoint[0] =
-                        originPrevPickedWorldPoint[0] - dist * normal[0];
+                        prevPickedWorldPoint[0] - dist * unitNormal[0];
                     projectedPrevPickedPoint[1] =
-                        originPrevPickedWorldPoint[1] - dist * normal[1];
+                        prevPickedWorldPoint[1] - dist * unitNormal[1];
                     projectedPrevPickedPoint[2] =
-                        originPrevPickedWorldPoint[2] - dist * normal[2];
+                        prevPickedWorldPoint[2] - dist * unitNormal[2];
                 }
 
                 double projectedCurrPickedPoint[3];
                 {
-                    const double dist =
-                        vtkMath::Dot(originCurrPickedWorldPoint, normal);
+                    const double vec[3] = {
+                        currPickedWorldPoint[0] - tranformedOriginPoint[0],
+                        currPickedWorldPoint[1] - tranformedOriginPoint[1],
+                        currPickedWorldPoint[2] - tranformedOriginPoint[2]};
+
+                    double unitNormal[3] = {tranformedNormalAxisEndPoint[0] -
+                                                tranformedOriginPoint[0],
+                                            tranformedNormalAxisEndPoint[1] -
+                                                tranformedOriginPoint[1],
+                                            tranformedNormalAxisEndPoint[2] -
+                                                tranformedOriginPoint[2]};
+
+                    vtkMath::Normalize(unitNormal);
+
+                    const double dist = vtkMath::Dot(vec, unitNormal);
                     projectedCurrPickedPoint[0] =
-                        originCurrPickedWorldPoint[0] - dist * normal[0];
+                        currPickedWorldPoint[0] - dist * unitNormal[0];
                     projectedCurrPickedPoint[1] =
-                        originCurrPickedWorldPoint[1] - dist * normal[1];
+                        currPickedWorldPoint[1] - dist * unitNormal[1];
                     projectedCurrPickedPoint[2] =
-                        originCurrPickedWorldPoint[2] - dist * normal[2];
+                        currPickedWorldPoint[2] - dist * unitNormal[2];
                 }
 
-                vtkMath::Normalize(projectedPrevPickedPoint);
-                vtkMath::Normalize(projectedCurrPickedPoint);
+                double projectedPrevPickedVec[3] = {
+                    projectedPrevPickedPoint[0] - tranformedOriginPoint[0],
+                    projectedPrevPickedPoint[1] - tranformedOriginPoint[1],
+                    projectedPrevPickedPoint[2] - tranformedOriginPoint[2]};
 
-                double axis[3];
-                vtkMath::Cross(projectedPrevPickedPoint,
-                               projectedCurrPickedPoint, axis);
+                double projectedCurrPickedVec[3] = {
+                    projectedCurrPickedPoint[0] - tranformedOriginPoint[0],
+                    projectedCurrPickedPoint[1] - tranformedOriginPoint[1],
+                    projectedCurrPickedPoint[2] - tranformedOriginPoint[2]};
 
-                const double angleRadians = std::acos(vtkMath::Dot(
-                    projectedPrevPickedPoint, projectedCurrPickedPoint));
+                vtkMath::Normalize(projectedPrevPickedVec);
+                vtkMath::Normalize(projectedCurrPickedVec);
+
+                double rotateAxis[3];
+                vtkMath::Cross(projectedPrevPickedVec, projectedCurrPickedVec,
+                               rotateAxis);
+
+                const auto dot = vtkMath::Dot(projectedPrevPickedVec,
+                                              projectedCurrPickedVec);
+                const double angleRadians = std::acos(dot);
 
                 const double angleDegrees =
                     vtkMath::DegreesFromRadians(angleRadians);
 
+                const double translationX = transformMatrix->GetElement(0, 3);
+                const double translationY = transformMatrix->GetElement(1, 3);
+                const double translationZ = transformMatrix->GetElement(2, 3);
+
                 vtkNew<vtkTransform> trans;
-                trans->SetMatrix(originMatrix);
-                trans->RotateWXYZ(angleDegrees, axis);
+                trans->PostMultiply();
+                trans->SetMatrix(transformMatrix);
+                trans->Translate(-translationX, -translationY, -translationZ);
+                trans->RotateWXYZ(angleDegrees, rotateAxis);
+                trans->Translate(translationX, translationY, translationZ);
+
                 newMatrix->DeepCopy(trans->GetMatrix());
             }
             actors->SetUserMatrix(newMatrix);
