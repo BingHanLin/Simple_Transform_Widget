@@ -526,9 +526,21 @@ void movableAxesRepresentation::PlaceWidget(double bounds[6])
     const std::array<double, 3> maxPoint = {bounds[1], bounds[3], bounds[5]};
 
     const auto diagonalLength =
-        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data());
+        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data()) * 0.5;
 
-    // TODO: place actors to bounds center and use diagonalLength as diameter?
+    for (auto actors :
+         {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
+          axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2]})
+    {
+        vtkNew<vtkTransform> trans;
+        trans->Scale(diagonalLength / 1.0, diagonalLength / 1.0,
+                     diagonalLength / 1.0);
+
+        vtkNew<vtkMatrix4x4> newMatrix;
+        newMatrix->DeepCopy(trans->GetMatrix());
+
+        actors->SetUserMatrix(newMatrix);
+    }
 }
 
 int movableAxesRepresentation::ComputeInteractionState(int x, int y,

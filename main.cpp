@@ -3,6 +3,7 @@
 #include <vtkCamera.h>
 #include <vtkCommand.h>
 #include <vtkCubeAxesActor.h>
+#include <vtkCubeSource.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
 #include <vtkOrientationMarkerWidget.h>
@@ -79,6 +80,8 @@ int main(int, char *[])
     vtkNew<movableAxesWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
     myWidget->CreateDefaultRepresentation();
+    double bounds[6] = {-1.0, 1.0, -1.0, 1.0, -1.0, 1.0};
+    myWidget->GetRepresentation()->PlaceWidget(bounds);
 
     // You could do this if you want to set properties at this point:
     // vtkNew<movableAxesRepresentation> lineRepresentation;
@@ -90,9 +93,23 @@ int main(int, char *[])
 
     // vtkCubeAxesActor Actor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
-    cubeAxesActor->SetBounds(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    cubeAxesActor->SetBounds(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     cubeAxesActor->SetCamera(renderer->GetActiveCamera());
     renderer->AddActor(cubeAxesActor);
+
+    // Cube Actor
+    vtkNew<vtkCubeSource> cube;
+    cube->SetBounds(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+    cube->Update();
+
+    vtkNew<vtkPolyDataMapper> cubeMapper;
+    cubeMapper->SetInputData(cube->GetOutput());
+
+    vtkNew<vtkActor> cubeActor;
+    cubeActor->SetMapper(cubeMapper);
+    cubeActor->GetProperty()->SetColor(colors->GetColor3d("Banana").GetData());
+    cubeActor->SetVisibility(true);
+    renderer->AddActor(cubeActor);
 
     // Axes Widget
     auto vtkAxes = vtkSmartPointer<vtkAxesActor>::New();
@@ -103,6 +120,14 @@ int main(int, char *[])
     axesWidget->SetViewport(0.0, 0.0, 0.20, 0.20);
     axesWidget->SetEnabled(1);
     axesWidget->InteractiveOff();
+
+    // Reset camera
+    double allBounds[6];
+    renderer->ComputeVisiblePropBounds(allBounds);
+    if (vtkMath::AreBoundsInitialized(allBounds))
+    {
+        renderer->ResetCamera(allBounds);
+    }
 
     // Render
     renderWindow->Render();
