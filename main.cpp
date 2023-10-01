@@ -2,6 +2,7 @@
 #include <vtkAxesActor.h>
 #include <vtkCamera.h>
 #include <vtkCommand.h>
+#include <vtkConeSource.h>
 #include <vtkCubeAxesActor.h>
 #include <vtkCubeSource.h>
 #include <vtkNamedColors.h>
@@ -14,40 +15,53 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkSphereSource.h>
+#include <vtkTransform.h>
 
 #include "movableAxesRepresentation.hpp"
 #include "movableAxesWidget.hpp"
 
 // This does the actual work.
 // Callback for the interaction
-class vtkLineCallback : public vtkCommand
+class transformCallback : public vtkCommand
 {
    public:
-    static vtkLineCallback *New()
+    static transformCallback *New()
     {
-        return new vtkLineCallback;
+        return new transformCallback;
     }
 
     virtual void Execute(vtkObject *caller, unsigned long, void *)
     {
-        // movableAxesWidget *lineWidget =
-        //     reinterpret_cast<movableAxesWidget *>(caller);
+        vtkSmartPointer<movableAxesWidget> widget =
+            dynamic_cast<movableAxesWidget *>(caller);
 
-        // // Get the actual box coordinates of the line
-        // vtkNew<vtkPolyData> polydata;
-        // static_cast<movableAxesRepresentation
-        // *>(lineWidget->GetRepresentation())
-        //     ->GetPolyData(polydata);
+        if (widget != nullptr && actor_ != nullptr)
+        {
+            if (auto rep = dynamic_cast<movableAxesRepresentation *>(
+                    widget->GetRepresentation()))
+            {
+                vtkNew<vtkTransform> trans;
+                rep->GetTransform(trans);
 
-        // // Display one of the points, just so we know it's working
-        // double p[3];
-        // polydata->GetPoint(0, p);
-        // std::cout << "P: " << p[0] << " " << p[1] << " " << p[2] <<
-        // std::endl;
+                vtkNew<vtkMatrix4x4> newMatrix;
+                newMatrix->DeepCopy(trans->GetMatrix());
+
+                actor_->SetUserMatrix(newMatrix);
+            }
+        }
     }
-    vtkLineCallback()
+
+    void setActor(vtkSmartPointer<vtkActor> actor)
+    {
+        actor_ = actor;
+    };
+
+    transformCallback() : actor_(nullptr)
     {
     }
+
+   private:
+    vtkSmartPointer<vtkActor> actor_;
 };
 
 int main(int, char *[])
@@ -77,39 +91,38 @@ int main(int, char *[])
     vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
     renderWindowInteractor->SetRenderWindow(renderWindow);
 
+    // Cube Actor
+    vtkNew<vtkConeSource> cone;
+    cone->SetCenter(0.0, 0.0, 0.0);
+    cone->SetHeight(5);
+    cone->SetRadius(2.5);
+    cone->Update();
+
+    vtkNew<vtkPolyDataMapper> coneMapper;
+    coneMapper->SetInputData(cone->GetOutput());
+
+    vtkNew<vtkActor> coneActor;
+    coneActor->SetMapper(coneMapper);
+    coneActor->GetProperty()->SetColor(colors->GetColor3d("Banana").GetData());
+    coneActor->SetVisibility(true);
+    renderer->AddActor(coneActor);
+
+    // Add movableAxesWidget
     vtkNew<movableAxesWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
     myWidget->CreateDefaultRepresentation();
     double bounds[6] = {-1.0, 1.0, -1.0, 1.0, -1.0, 1.0};
     myWidget->GetRepresentation()->PlaceWidget(bounds);
 
-    // You could do this if you want to set properties at this point:
-    // vtkNew<movableAxesRepresentation> lineRepresentation;
-    // lineWidget->SetRepresentation(lineRepresentation);
+    vtkNew<transformCallback> callback;
+    callback->setActor(coneActor);
+    myWidget->AddObserver(vtkCommand::InteractionEvent, callback);
 
-    vtkNew<vtkLineCallback> lineCallback;
-
-    // myWidget->AddObserver(vtkCommand::InteractionEvent, lineCallback);
-
-    // vtkCubeAxesActor Actor
+    // Add vtkCubeAxesActor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
     cubeAxesActor->SetBounds(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     cubeAxesActor->SetCamera(renderer->GetActiveCamera());
     renderer->AddActor(cubeAxesActor);
-
-    // Cube Actor
-    vtkNew<vtkCubeSource> cube;
-    cube->SetBounds(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-    cube->Update();
-
-    vtkNew<vtkPolyDataMapper> cubeMapper;
-    cubeMapper->SetInputData(cube->GetOutput());
-
-    vtkNew<vtkActor> cubeActor;
-    cubeActor->SetMapper(cubeMapper);
-    cubeActor->GetProperty()->SetColor(colors->GetColor3d("Banana").GetData());
-    cubeActor->SetVisibility(true);
-    renderer->AddActor(cubeActor);
 
     // Axes Widget
     auto vtkAxes = vtkSmartPointer<vtkAxesActor>::New();

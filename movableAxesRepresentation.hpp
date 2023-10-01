@@ -58,7 +58,9 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
 
     void GetActors(vtkPropCollection *pc) override;
 
-    void setHoverState(const INTERACTIONSTATE state);
+    void SetHoverState(const INTERACTIONSTATE state);
+
+    void GetTransform(vtkTransform *t);
 
    protected:
     movableAxesRepresentation();
@@ -76,6 +78,8 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
 
     std::array<double, 3> startEventPosition_;
     std::array<double, 3> lastEventPosition_;
+
+    vtkNew<vtkTransform> transform_;
 
     movableAxesRepresentation(const movableAxesRepresentation &) = delete;
     void operator=(const movableAxesRepresentation &) = delete;

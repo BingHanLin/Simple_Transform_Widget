@@ -204,7 +204,7 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         }
 
         reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
-            ->setHoverState(
+            ->SetHoverState(
                 static_cast<movableAxesRepresentation::INTERACTIONSTATE>(
                     currState));
 
@@ -227,8 +227,8 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
             ->WidgetInteraction(e);
 
-        self->InvokeEvent(vtkCommand::InteractionEvent, nullptr);
         self->EventCallbackCommand->SetAbortFlag(1);
+        self->InvokeEvent(vtkCommand::InteractionEvent, nullptr);
         self->Render();
     }
 }
