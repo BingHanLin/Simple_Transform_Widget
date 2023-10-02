@@ -23,7 +23,11 @@ vtkStandardNewMacro(movableAxesRepresentation);
 
 movableAxesRepresentation::movableAxesRepresentation()
 {
-    transform_->Identity();
+    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+    trans->Identity();
+
+    dummyActor_ = vtkSmartPointer<vtkAssembly>::New();
+    dummyActor_->SetUserTransform(trans);
 
     const std::array<std::array<double, 3>, 3> lineDirection = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
@@ -333,10 +337,10 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
             normalAxisEndPoint[2] = 1.0;
         }
 
-        bool isChanged = false;
         for (auto actors :
              {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
-              axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2]})
+              axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2],
+              dummyActor_})
         {
             vtkMatrix4x4 *actorTransformMatrix = actors->GetUserMatrix();
 
@@ -443,28 +447,6 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
 
                     newMatrix->DeepCopy(trans->GetMatrix());
                 }
-
-                {
-                    if (!isChanged)
-                    {
-                        const double translationX =
-                            transform_->GetMatrix()->GetElement(0, 3);
-                        const double translationY =
-                            transform_->GetMatrix()->GetElement(1, 3);
-                        const double translationZ =
-                            transform_->GetMatrix()->GetElement(2, 3);
-
-                        transform_->Translate(-translationX, -translationY,
-                                              -translationZ);
-
-                        transform_->RotateWXYZ(angleDegrees, rotateAxis);
-
-                        transform_->Translate(translationX, translationY,
-                                              translationZ);
-
-                        isChanged = true;
-                    }
-                }
             }
             actors->SetUserMatrix(newMatrix);
         }
@@ -493,10 +475,10 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
             direction[2] = 1.0;
         }
 
-        bool isChanged = false;
         for (vtkProp3D *actors :
              {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
-              axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2]})
+              axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2],
+              dummyActor_})
         {
             vtkMatrix4x4 *originMatrix = actors->GetUserMatrix();
 
@@ -541,16 +523,6 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
                                      direction[1] * projectedDiff[1],
                                      direction[2] * projectedDiff[2]);
                     newMatrix->DeepCopy(trans->GetMatrix());
-                }
-
-                {
-                    // if (!isChanged)
-                    // {
-                    transform_->Translate(direction[0] * projectedDiff[0],
-                                          direction[1] * projectedDiff[1],
-                                          direction[2] * projectedDiff[2]);
-                    //     isChanged = true;
-                    // }
                 }
             }
             actors->SetUserMatrix(newMatrix);
@@ -705,9 +677,7 @@ void movableAxesRepresentation::SetHoverState(const INTERACTIONSTATE state)
 
 void movableAxesRepresentation::GetTransform(vtkTransform *t)
 {
-    vtkNew<vtkMatrix4x4> matrix;
-    matrix->DeepCopy(transform_->GetMatrix());
-    t->SetMatrix(matrix);
+    t->SetMatrix(dummyActor_->GetUserMatrix());
 }
 
 double *movableAxesRepresentation::GetBounds()
