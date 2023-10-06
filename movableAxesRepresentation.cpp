@@ -291,6 +291,12 @@ void movableAxesRepresentation::SetRenderer(vtkRenderer *ren)
 
 void movableAxesRepresentation::StartWidgetInteraction(double e[2])
 {
+    auto path = this->GetAssemblyPath(e[0], e[1], 0., picker_);
+    if (path != nullptr)
+    {
+        picker_->GetPickPosition(lastEventWorldPosition_.data());
+    }
+
     startEventPosition_ = {e[0], e[1], 0.0};
     lastEventPosition_ = {e[0], e[1], 0.0};
 
@@ -300,16 +306,24 @@ void movableAxesRepresentation::StartWidgetInteraction(double e[2])
 
 void movableAxesRepresentation::WidgetInteraction(double e[2])
 {
-    std::cout << "WidgetInteraction: " << e[0] << ", " << e[1] << std::endl;
+    // refer to vtkBoxWidget.cxx
+    double focalPoint[4];
+    vtkInteractorObserver::ComputeWorldToDisplay(
+        this->Renderer, lastEventWorldPosition_[0], lastEventWorldPosition_[1],
+        lastEventWorldPosition_[2], focalPoint);
 
     double prevPickedWorldPoint[4];
     vtkInteractorObserver::ComputeDisplayToWorld(
-        this->Renderer, lastEventPosition_[0], lastEventPosition_[1], 0,
-        prevPickedWorldPoint);
+        this->Renderer, lastEventPosition_[0], lastEventPosition_[1],
+        focalPoint[2], prevPickedWorldPoint);
 
     double currPickedWorldPoint[4];
-    vtkInteractorObserver::ComputeDisplayToWorld(this->Renderer, e[0], e[1], 0,
-                                                 currPickedWorldPoint);
+    vtkInteractorObserver::ComputeDisplayToWorld(
+        this->Renderer, e[0], e[1], focalPoint[2], currPickedWorldPoint);
+
+    lastEventPosition_ = {e[0], e[1], 0.0};
+    lastEventWorldPosition_ = {prevPickedWorldPoint[0], prevPickedWorldPoint[1],
+                               prevPickedWorldPoint[2]};
 
     if (this->InteractionState == INTERACTIONSTATE::onXRing ||
         this->InteractionState == INTERACTIONSTATE::onYRing ||
@@ -528,8 +542,6 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
             actors->SetUserMatrix(newMatrix);
         }
     }
-
-    lastEventPosition_ = {e[0], e[1], 0.0};
 
     this->Modified();
     this->BuildRepresentation();

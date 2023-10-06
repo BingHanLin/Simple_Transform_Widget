@@ -79,6 +79,7 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
 
     std::array<double, 3> startEventPosition_;
     std::array<double, 3> lastEventPosition_;
+    std::array<double, 3> lastEventWorldPosition_;
 
     movableAxesRepresentation(const movableAxesRepresentation &) = delete;
     void operator=(const movableAxesRepresentation &) = delete;
