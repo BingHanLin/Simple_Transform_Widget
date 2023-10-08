@@ -51,9 +51,9 @@ class transformRepresentation : public vtkWidgetRepresentation
     vtkSmartPointer<vtkCellPicker> picker_;
     vtkProp3D *currActor_ = nullptr;
 
-    std::array<double, 3> startEventPosition_;
-    std::array<double, 3> lastEventPosition_;
-    std::array<double, 3> lastEventWorldPosition_;
+    std::array<double, 3> prevEventPosition_;
+    std::array<double, 4> prevEventWorldPosition_;
+    std::array<double, 4> currEventWorldPosition_;
 
     transformRepresentation(const transformRepresentation &) = delete;
     void operator=(const transformRepresentation &) = delete;
