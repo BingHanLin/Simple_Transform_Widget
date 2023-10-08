@@ -21,44 +21,18 @@ class transformRepresentation : public vtkWidgetRepresentation
         onZArrow
     };
 
-    /**
-     * Instantiate the class.
-     */
     static transformRepresentation *New();
-
-    ///@{
-    /**
-     * Standard methods for the class.
-     */
     vtkTypeMacro(transformRepresentation, vtkWidgetRepresentation);
-    void PrintSelf(ostream &os, vtkIndent indent) override;
-    ///@}
 
-    ///@{
-    /**
-     * These are methods that satisfy vtkWidgetRepresentation's API.
-     */
     void PlaceWidget(double bounds[6]) override;
-    void BuildRepresentation() override;
-    int ComputeInteractionState(int X, int Y, int modify = 0) override;
     void StartWidgetInteraction(double e[2]) override;
     void WidgetInteraction(double e[2]) override;
-    double *GetBounds() VTK_SIZEHINT(6) override;
+    int ComputeInteractionState(int X, int Y, int modify = 0) override;
+    void Highlight(int highlight) override;
 
-    /**
-     * Overload the superclasses' GetMTime() because internal classes
-     * are used to keep the state of the representation.
-     */
-    vtkMTimeType GetMTime() override;
-
-    /**
-     * Overridden to set the rendererer on the internal representations.
-     */
-    void SetRenderer(vtkRenderer *ren) override;
+    void BuildRepresentation() override;
 
     void GetActors(vtkPropCollection *pc) override;
-
-    void SetHoverState(const INTERACTIONSTATE state);
 
     void GetTransform(vtkTransform *t);
 

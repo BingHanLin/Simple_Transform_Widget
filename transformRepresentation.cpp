@@ -284,11 +284,6 @@ transformRepresentation::~transformRepresentation()
 {
 }
 
-void transformRepresentation::SetRenderer(vtkRenderer *ren)
-{
-    this->Superclass::SetRenderer(ren);
-}
-
 void transformRepresentation::StartWidgetInteraction(double e[2])
 {
     auto path = this->GetAssemblyPath(e[0], e[1], 0., picker_);
@@ -619,7 +614,12 @@ int transformRepresentation::ComputeInteractionState(int x, int y,
     return this->InteractionState;
 }
 
-void transformRepresentation::SetHoverState(const INTERACTIONSTATE state)
+void transformRepresentation::GetTransform(vtkTransform *t)
+{
+    t->SetMatrix(dummyActor_->GetUserMatrix());
+}
+
+void transformRepresentation::Highlight(int highlight)
 {
     for (auto actors :
          {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
@@ -643,7 +643,9 @@ void transformRepresentation::SetHoverState(const INTERACTIONSTATE state)
         }
     }
 
+    if (highlight)
     {
+        const auto state = this->InteractionState;
         vtkNew<vtkPropCollection> propsCollection;
 
         if (state == INTERACTIONSTATE::onXRing)
@@ -687,23 +689,6 @@ void transformRepresentation::SetHoverState(const INTERACTIONSTATE state)
     }
 }
 
-void transformRepresentation::GetTransform(vtkTransform *t)
-{
-    t->SetMatrix(dummyActor_->GetUserMatrix());
-}
-
-double *transformRepresentation::GetBounds()
-{
-    double bounds[6];
-    bounds[0] = -0.5;
-    bounds[1] = 0.5;
-    bounds[2] = -0.5;
-    bounds[3] = 0.5;
-    bounds[4] = -0.5;
-    bounds[5] = 0.5;
-    return bounds;
-}
-
 void transformRepresentation::BuildRepresentation()
 {
     if (this->GetMTime() > this->BuildTime ||
@@ -716,12 +701,6 @@ void transformRepresentation::BuildRepresentation()
     }
 }
 
-vtkMTimeType transformRepresentation::GetMTime()
-{
-    vtkMTimeType mTime = this->Superclass::GetMTime();
-    return mTime;
-}
-
 void transformRepresentation::GetActors(vtkPropCollection *pc)
 {
     for (auto i = 0; i < 3; i++)
@@ -729,9 +708,4 @@ void transformRepresentation::GetActors(vtkPropCollection *pc)
         pc->AddItem(axisRingActors_[i]);
         pc->AddItem(axisArrowActors_[i]);
     }
-}
-
-void transformRepresentation::PrintSelf(ostream &os, vtkIndent indent)
-{
-    this->Superclass::PrintSelf(os, indent);
 }
