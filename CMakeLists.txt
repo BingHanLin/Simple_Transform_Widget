@@ -7,8 +7,8 @@ find_package(VTK REQUIRED)
 
 add_executable(${PROJECT_NAME}  
   ${PROJECT_SOURCE_DIR}/main.cpp
-  ${PROJECT_SOURCE_DIR}/movableAxesRepresentation.cpp
-  ${PROJECT_SOURCE_DIR}/movableAxesWidget.cpp
+  ${PROJECT_SOURCE_DIR}/transformRepresentation.cpp
+  ${PROJECT_SOURCE_DIR}/transformWidget.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

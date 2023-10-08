@@ -10,12 +10,12 @@
 #include <vtkWidgetCallbackMapper.h>
 #include <vtkWidgetEvent.h>
 
-#include "movableAxesRepresentation.hpp"
-#include "movableAxesWidget.hpp"
+#include "transformRepresentation.hpp"
+#include "transformWidget.hpp"
 
-vtkStandardNewMacro(movableAxesWidget);
+vtkStandardNewMacro(transformWidget);
 
-movableAxesWidget::movableAxesWidget()
+transformWidget::transformWidget()
 {
     this->state_ = WIDGETSTATE::start;
 
@@ -23,28 +23,28 @@ movableAxesWidget::movableAxesWidget()
     {
         this->CallbackMapper->SetCallbackMethod(
             vtkCommand::LeftButtonPressEvent, vtkWidgetEvent::Select, this,
-            movableAxesWidget::SelectAction);
+            transformWidget::SelectAction);
 
         this->CallbackMapper->SetCallbackMethod(
             vtkCommand::LeftButtonReleaseEvent, vtkWidgetEvent::EndSelect, this,
-            movableAxesWidget::EndSelectAction);
+            transformWidget::EndSelectAction);
 
         this->CallbackMapper->SetCallbackMethod(vtkCommand::MouseMoveEvent,
                                                 vtkWidgetEvent::Move, this,
-                                                movableAxesWidget::MoveAction);
+                                                transformWidget::MoveAction);
 
         this->keyEventCallbackCommand_ = vtkCallbackCommand::New();
         this->keyEventCallbackCommand_->SetClientData(this);
-        // this->keyEventCallbackCommand_->SetCallback(movableAxesWidget::ProcessKeyEvents);
+        // this->keyEventCallbackCommand_->SetCallback(transformWidget::ProcessKeyEvents);
     }
 }
 
-movableAxesWidget::~movableAxesWidget()
+transformWidget::~transformWidget()
 {
     this->keyEventCallbackCommand_->Delete();
 }
 
-void movableAxesWidget::SetEnabled(int enabling)
+void transformWidget::SetEnabled(int enabling)
 {
     const int enabled = this->Enabled;
 
@@ -107,29 +107,29 @@ void movableAxesWidget::SetEnabled(int enabling)
     }
 }
 
-void movableAxesWidget::CreateDefaultRepresentation()
+void transformWidget::CreateDefaultRepresentation()
 {
     if (!this->WidgetRep)
     {
-        this->WidgetRep = movableAxesRepresentation::New();
+        this->WidgetRep = transformRepresentation::New();
     }
 }
 
-void movableAxesWidget::SetProcessEvents(vtkTypeBool enabled)
+void transformWidget::SetProcessEvents(vtkTypeBool enabled)
 {
 }
 
-void movableAxesWidget::PrintSelf(ostream &os, vtkIndent indent)
+void transformWidget::PrintSelf(ostream &os, vtkIndent indent)
 {
     vtkAbstractWidget::PrintSelf(os, indent);
 }
 
-void movableAxesWidget::SelectAction(vtkAbstractWidget *w)
+void transformWidget::SelectAction(vtkAbstractWidget *w)
 {
     std::cout << "SelectAction......." << std::endl;
-    auto self = reinterpret_cast<movableAxesWidget *>(w);
+    auto self = reinterpret_cast<transformWidget *>(w);
     if (self->WidgetRep->GetInteractionState() ==
-        movableAxesRepresentation::INTERACTIONSTATE::outside)
+        transformRepresentation::INTERACTIONSTATE::outside)
     {
         return;
     }
@@ -137,14 +137,14 @@ void movableAxesWidget::SelectAction(vtkAbstractWidget *w)
     const int x = self->Interactor->GetEventPosition()[0];
     const int y = self->Interactor->GetEventPosition()[1];
 
-    self->state_ = movableAxesWidget::WIDGETSTATE::active;
+    self->state_ = transformWidget::WIDGETSTATE::active;
 
     self->GrabFocus(self->EventCallbackCommand);
 
     double eventPos[2];
     eventPos[0] = static_cast<double>(x);
     eventPos[1] = static_cast<double>(y);
-    reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
+    reinterpret_cast<transformRepresentation *>(self->WidgetRep)
         ->StartWidgetInteraction(eventPos);
 
     // start the interaction
@@ -154,16 +154,16 @@ void movableAxesWidget::SelectAction(vtkAbstractWidget *w)
     self->Render();
 }
 
-void movableAxesWidget::EndSelectAction(vtkAbstractWidget *w)
+void transformWidget::EndSelectAction(vtkAbstractWidget *w)
 {
-    auto self = reinterpret_cast<movableAxesWidget *>(w);
-    if (self->state_ == movableAxesWidget::WIDGETSTATE::start)
+    auto self = reinterpret_cast<transformWidget *>(w);
+    if (self->state_ == transformWidget::WIDGETSTATE::start)
     {
         return;
     }
 
     // Return state to not active
-    self->state_ = movableAxesWidget::WIDGETSTATE::start;
+    self->state_ = transformWidget::WIDGETSTATE::start;
     self->ReleaseFocus();
     self->InvokeEvent(vtkCommand::LeftButtonReleaseEvent,
                       nullptr);  // handles observe this
@@ -173,16 +173,16 @@ void movableAxesWidget::EndSelectAction(vtkAbstractWidget *w)
     self->Render();
 }
 
-void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
+void transformWidget::MoveAction(vtkAbstractWidget *w)
 {
     // std::cout << "MoveAction......." << std::endl;
-    auto self = reinterpret_cast<movableAxesWidget *>(w);
+    auto self = reinterpret_cast<transformWidget *>(w);
 
     // compute some info we need for all actions
     const int x = self->Interactor->GetEventPosition()[0];
     const int y = self->Interactor->GetEventPosition()[1];
 
-    if (self->state_ == movableAxesWidget::WIDGETSTATE::start)
+    if (self->state_ == transformWidget::WIDGETSTATE::start)
     {
         self->Interactor->Disable();  // avoid extra renders
 
@@ -192,8 +192,7 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         // std::cout << "currState: " << currState << std::endl;
 
         {
-            if (currState ==
-                movableAxesRepresentation::INTERACTIONSTATE::outside)
+            if (currState == transformRepresentation::INTERACTIONSTATE::outside)
             {
                 cursorChanged = self->RequestCursorShape(VTK_CURSOR_DEFAULT);
             }
@@ -203,9 +202,9 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
             }
         }
 
-        reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
+        reinterpret_cast<transformRepresentation *>(self->WidgetRep)
             ->SetHoverState(
-                static_cast<movableAxesRepresentation::INTERACTIONSTATE>(
+                static_cast<transformRepresentation::INTERACTIONSTATE>(
                     currState));
 
         self->Interactor->Enable();  // avoid extra renders
@@ -224,7 +223,7 @@ void movableAxesWidget::MoveAction(vtkAbstractWidget *w)
         self->InvokeEvent(vtkCommand::MouseMoveEvent,
                           nullptr);  // handles observe this
 
-        reinterpret_cast<movableAxesRepresentation *>(self->WidgetRep)
+        reinterpret_cast<transformRepresentation *>(self->WidgetRep)
             ->WidgetInteraction(e);
 
         self->EventCallbackCommand->SetAbortFlag(1);

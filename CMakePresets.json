@@ -3,13 +3,14 @@
     "configurePresets": [
         {
             "name": "MSCV_64",
-            "displayName": "Visual Studio Community 2019 Release - amd64",
+            "displayName": "Visual Studio Community 2019 - amd64",
             "description": "Using compilers for Visual Studio 16 2019 (x64 architecture)",
             "generator": "Visual Studio 16 2019",
             "toolset": "host=x64",
             "architecture": "x64",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe",
@@ -21,7 +22,7 @@
     "buildPresets": [
         {
             "name": "MSCV_64-debug",
-            "displayName": "Visual Studio Community 2019 Release - amd64 - Debug",
+            "displayName": "Visual Studio Community 2019 - amd64 - Debug",
             "configurePreset": "MSCV_64",
             "configuration": "Debug"
         }

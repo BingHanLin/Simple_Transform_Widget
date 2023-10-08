@@ -7,7 +7,7 @@
 
 class vtkAssembly;
 class vtkCellPicker;
-class movableAxesRepresentation : public vtkWidgetRepresentation
+class transformRepresentation : public vtkWidgetRepresentation
 {
    public:
     enum INTERACTIONSTATE
@@ -24,13 +24,13 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
     /**
      * Instantiate the class.
      */
-    static movableAxesRepresentation *New();
+    static transformRepresentation *New();
 
     ///@{
     /**
      * Standard methods for the class.
      */
-    vtkTypeMacro(movableAxesRepresentation, vtkWidgetRepresentation);
+    vtkTypeMacro(transformRepresentation, vtkWidgetRepresentation);
     void PrintSelf(ostream &os, vtkIndent indent) override;
     ///@}
 
@@ -63,8 +63,8 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
     void GetTransform(vtkTransform *t);
 
    protected:
-    movableAxesRepresentation();
-    ~movableAxesRepresentation() override;
+    transformRepresentation();
+    ~transformRepresentation() override;
 
    private:
     const std::array<std::array<double, 3>, 3> axisNormalColor_ = {
@@ -81,6 +81,6 @@ class movableAxesRepresentation : public vtkWidgetRepresentation
     std::array<double, 3> lastEventPosition_;
     std::array<double, 3> lastEventWorldPosition_;
 
-    movableAxesRepresentation(const movableAxesRepresentation &) = delete;
-    void operator=(const movableAxesRepresentation &) = delete;
+    transformRepresentation(const transformRepresentation &) = delete;
+    void operator=(const transformRepresentation &) = delete;
 };

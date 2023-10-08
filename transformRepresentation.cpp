@@ -17,11 +17,11 @@
 #include <vtkTransform.h>
 #include <vtkWindow.h>
 
-#include "movableAxesRepresentation.hpp"
+#include "transformRepresentation.hpp"
 
-vtkStandardNewMacro(movableAxesRepresentation);
+vtkStandardNewMacro(transformRepresentation);
 
-movableAxesRepresentation::movableAxesRepresentation()
+transformRepresentation::transformRepresentation()
 {
     vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
     trans->Identity();
@@ -280,16 +280,16 @@ movableAxesRepresentation::movableAxesRepresentation()
     this->PlaceWidget(bounds);
 }
 
-movableAxesRepresentation::~movableAxesRepresentation()
+transformRepresentation::~transformRepresentation()
 {
 }
 
-void movableAxesRepresentation::SetRenderer(vtkRenderer *ren)
+void transformRepresentation::SetRenderer(vtkRenderer *ren)
 {
     this->Superclass::SetRenderer(ren);
 }
 
-void movableAxesRepresentation::StartWidgetInteraction(double e[2])
+void transformRepresentation::StartWidgetInteraction(double e[2])
 {
     auto path = this->GetAssemblyPath(e[0], e[1], 0., picker_);
     if (path != nullptr)
@@ -304,7 +304,7 @@ void movableAxesRepresentation::StartWidgetInteraction(double e[2])
                                   static_cast<int>(e[1]), 0);
 }
 
-void movableAxesRepresentation::WidgetInteraction(double e[2])
+void transformRepresentation::WidgetInteraction(double e[2])
 {
     // refer to vtkBoxWidget.cxx
     double focalPoint[4];
@@ -547,7 +547,7 @@ void movableAxesRepresentation::WidgetInteraction(double e[2])
     this->BuildRepresentation();
 }
 
-void movableAxesRepresentation::PlaceWidget(double bounds[6])
+void transformRepresentation::PlaceWidget(double bounds[6])
 {
     // xmin,xmax,ymin,ymax,zmin,
     const std::array<double, 3> minPoint = {bounds[0], bounds[2], bounds[4]};
@@ -571,8 +571,8 @@ void movableAxesRepresentation::PlaceWidget(double bounds[6])
     }
 }
 
-int movableAxesRepresentation::ComputeInteractionState(int x, int y,
-                                                       int vtkNotUsed(modify))
+int transformRepresentation::ComputeInteractionState(int x, int y,
+                                                     int vtkNotUsed(modify))
 {
     if (!this->Renderer || !this->Renderer->IsInViewport(x, y))
     {
@@ -619,7 +619,7 @@ int movableAxesRepresentation::ComputeInteractionState(int x, int y,
     return this->InteractionState;
 }
 
-void movableAxesRepresentation::SetHoverState(const INTERACTIONSTATE state)
+void transformRepresentation::SetHoverState(const INTERACTIONSTATE state)
 {
     for (auto actors :
          {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
@@ -687,12 +687,12 @@ void movableAxesRepresentation::SetHoverState(const INTERACTIONSTATE state)
     }
 }
 
-void movableAxesRepresentation::GetTransform(vtkTransform *t)
+void transformRepresentation::GetTransform(vtkTransform *t)
 {
     t->SetMatrix(dummyActor_->GetUserMatrix());
 }
 
-double *movableAxesRepresentation::GetBounds()
+double *transformRepresentation::GetBounds()
 {
     double bounds[6];
     bounds[0] = -0.5;
@@ -704,7 +704,7 @@ double *movableAxesRepresentation::GetBounds()
     return bounds;
 }
 
-void movableAxesRepresentation::BuildRepresentation()
+void transformRepresentation::BuildRepresentation()
 {
     if (this->GetMTime() > this->BuildTime ||
         (this->Renderer && this->Renderer->GetVTKWindow() &&
@@ -716,13 +716,13 @@ void movableAxesRepresentation::BuildRepresentation()
     }
 }
 
-vtkMTimeType movableAxesRepresentation::GetMTime()
+vtkMTimeType transformRepresentation::GetMTime()
 {
     vtkMTimeType mTime = this->Superclass::GetMTime();
     return mTime;
 }
 
-void movableAxesRepresentation::GetActors(vtkPropCollection *pc)
+void transformRepresentation::GetActors(vtkPropCollection *pc)
 {
     for (auto i = 0; i < 3; i++)
     {
@@ -731,7 +731,7 @@ void movableAxesRepresentation::GetActors(vtkPropCollection *pc)
     }
 }
 
-void movableAxesRepresentation::PrintSelf(ostream &os, vtkIndent indent)
+void transformRepresentation::PrintSelf(ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
 }

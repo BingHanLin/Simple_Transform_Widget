@@ -17,8 +17,8 @@
 #include <vtkSphereSource.h>
 #include <vtkTransform.h>
 
-#include "movableAxesRepresentation.hpp"
-#include "movableAxesWidget.hpp"
+#include "transformRepresentation.hpp"
+#include "transformWidget.hpp"
 
 // This does the actual work.
 // Callback for the interaction
@@ -32,12 +32,12 @@ class transformCallback : public vtkCommand
 
     virtual void Execute(vtkObject *caller, unsigned long, void *)
     {
-        vtkSmartPointer<movableAxesWidget> widget =
-            dynamic_cast<movableAxesWidget *>(caller);
+        vtkSmartPointer<transformWidget> widget =
+            dynamic_cast<transformWidget *>(caller);
 
         if (widget != nullptr && actor_ != nullptr)
         {
-            if (auto rep = dynamic_cast<movableAxesRepresentation *>(
+            if (auto rep = dynamic_cast<transformRepresentation *>(
                     widget->GetRepresentation()))
             {
                 vtkNew<vtkTransform> trans;
@@ -107,8 +107,8 @@ int main(int, char *[])
     coneActor->SetVisibility(true);
     renderer->AddActor(coneActor);
 
-    // Add movableAxesWidget
-    vtkNew<movableAxesWidget> myWidget;
+    // Add transformWidget
+    vtkNew<transformWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
     myWidget->CreateDefaultRepresentation();
     double bounds[6] = {-1.0, 1.0, -1.0, 1.0, -1.0, 1.0};

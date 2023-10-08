@@ -6,18 +6,18 @@ class vtkCallbackCommand;
 
 class movableAxesRepresentation;
 
-class movableAxesWidget : public vtkAbstractWidget
+class transformWidget : public vtkAbstractWidget
 {
    public:
     /**
      * Instantiate the object.
      */
-    static movableAxesWidget *New();
+    static transformWidget *New();
 
     /**
      * Standard vtkObject methods
      */
-    vtkTypeMacro(movableAxesWidget, movableAxesWidget);
+    vtkTypeMacro(transformWidget, transformWidget);
     void PrintSelf(ostream &os, vtkIndent indent) override;
 
     /**
@@ -49,8 +49,8 @@ class movableAxesWidget : public vtkAbstractWidget
     void SetProcessEvents(vtkTypeBool enabled) override;
 
    protected:
-    movableAxesWidget();
-    ~movableAxesWidget() override;
+    transformWidget();
+    ~transformWidget() override;
 
     static void SelectAction(vtkAbstractWidget *w);
     static void EndSelectAction(vtkAbstractWidget *w);
@@ -66,6 +66,6 @@ class movableAxesWidget : public vtkAbstractWidget
     int state_;
     vtkCallbackCommand *keyEventCallbackCommand_;
 
-    movableAxesWidget(const movableAxesWidget &) = delete;
-    void operator=(const movableAxesWidget &) = delete;
+    transformWidget(const transformWidget &) = delete;
+    void operator=(const transformWidget &) = delete;
 };
