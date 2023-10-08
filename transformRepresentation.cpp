@@ -231,31 +231,31 @@ transformRepresentation::transformRepresentation()
 
     for (auto i = 0; i < 3; i++)
     {
-        axisRingActors_[i] = vtkSmartPointer<vtkAssembly>::New();
-        axisRingActors_[i]->AddPart(axisRingCircleActors[i]);
-        axisRingActors_[i]->AddPart(axisRingConeActors[i]);
+        rotateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
+        rotateActors_[i]->AddPart(axisRingCircleActors[i]);
+        rotateActors_[i]->AddPart(axisRingConeActors[i]);
 
-        axisRingActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+        rotateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
 
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
 
-        axisRingActors_[i]->SetUserTransform(trans);
+        rotateActors_[i]->SetUserTransform(trans);
     }
 
     for (auto i = 0; i < 3; i++)
     {
-        axisArrowActors_[i] = vtkSmartPointer<vtkAssembly>::New();
-        axisArrowActors_[i]->AddPart(axisLineActors[i]);
-        axisArrowActors_[i]->AddPart(startConeActors[i]);
-        axisArrowActors_[i]->AddPart(endConeActors[i]);
+        translateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
+        translateActors_[i]->AddPart(axisLineActors[i]);
+        translateActors_[i]->AddPart(startConeActors[i]);
+        translateActors_[i]->AddPart(endConeActors[i]);
 
-        axisArrowActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+        translateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
 
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
 
-        axisArrowActors_[i]->SetUserTransform(trans);
+        translateActors_[i]->SetUserTransform(trans);
     }
 
     {
@@ -263,8 +263,8 @@ transformRepresentation::transformRepresentation()
         picker_->SetTolerance(0.001);
         for (auto i = 0; i < 3; i++)
         {
-            picker_->AddPickList(axisRingActors_[i]);
-            picker_->AddPickList(axisArrowActors_[i]);
+            picker_->AddPickList(rotateActors_[i]);
+            picker_->AddPickList(translateActors_[i]);
         }
         picker_->PickFromListOn();
     }
@@ -331,8 +331,8 @@ void transformRepresentation::PlaceWidget(double bounds[6])
         vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data()) * 0.5;
 
     for (auto actors :
-         {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
-          axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2]})
+         {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+          translateActors_[0], translateActors_[1], translateActors_[2]})
     {
         vtkNew<vtkTransform> trans;
         trans->Scale(diagonalLength / 1.0, diagonalLength / 1.0,
@@ -360,27 +360,27 @@ int transformRepresentation::ComputeInteractionState(int x, int y,
         currActor_ =
             reinterpret_cast<vtkProp3D *>(path->GetFirstNode()->GetViewProp());
 
-        if (currActor_ == axisRingActors_[0])
+        if (currActor_ == rotateActors_[0])
         {
             this->InteractionState = INTERACTIONSTATE::onXRing;
         }
-        else if (currActor_ == axisRingActors_[1])
+        else if (currActor_ == rotateActors_[1])
         {
             this->InteractionState = INTERACTIONSTATE::onYRing;
         }
-        else if (currActor_ == axisRingActors_[2])
+        else if (currActor_ == rotateActors_[2])
         {
             this->InteractionState = INTERACTIONSTATE::onZRing;
         }
-        else if (currActor_ == axisArrowActors_[0])
+        else if (currActor_ == translateActors_[0])
         {
             this->InteractionState = INTERACTIONSTATE::onXArrow;
         }
-        else if (currActor_ == axisArrowActors_[1])
+        else if (currActor_ == translateActors_[1])
         {
             this->InteractionState = INTERACTIONSTATE::onYArrow;
         }
-        else if (currActor_ == axisArrowActors_[2])
+        else if (currActor_ == translateActors_[2])
         {
             this->InteractionState = INTERACTIONSTATE::onZArrow;
         }
@@ -401,8 +401,8 @@ void transformRepresentation::GetTransform(vtkTransform *t)
 void transformRepresentation::Highlight(int highlight)
 {
     for (auto actors :
-         {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
-          axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2]})
+         {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+          translateActors_[0], translateActors_[1], translateActors_[2]})
     {
         vtkNew<vtkPropCollection> propsCollection;
         actors->GetActors(propsCollection);
@@ -429,27 +429,27 @@ void transformRepresentation::Highlight(int highlight)
 
         if (state == INTERACTIONSTATE::onXRing)
         {
-            axisRingActors_[0]->GetActors(propsCollection);
+            rotateActors_[0]->GetActors(propsCollection);
         }
         else if (state == INTERACTIONSTATE::onYRing)
         {
-            axisRingActors_[1]->GetActors(propsCollection);
+            rotateActors_[1]->GetActors(propsCollection);
         }
         else if (state == INTERACTIONSTATE::onZRing)
         {
-            axisRingActors_[2]->GetActors(propsCollection);
+            rotateActors_[2]->GetActors(propsCollection);
         }
         else if (state == INTERACTIONSTATE::onXArrow)
         {
-            axisArrowActors_[0]->GetActors(propsCollection);
+            translateActors_[0]->GetActors(propsCollection);
         }
         else if (state == INTERACTIONSTATE::onYArrow)
         {
-            axisArrowActors_[1]->GetActors(propsCollection);
+            translateActors_[1]->GetActors(propsCollection);
         }
         else if (state == INTERACTIONSTATE::onZArrow)
         {
-            axisArrowActors_[2]->GetActors(propsCollection);
+            translateActors_[2]->GetActors(propsCollection);
         }
 
         vtkCollectionSimpleIterator sIt;
@@ -502,8 +502,8 @@ void transformRepresentation::BuildRepresentation()
             }
 
             for (auto actors :
-                 {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
-                  axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2],
+                 {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+                  translateActors_[0], translateActors_[1], translateActors_[2],
                   dummyActor_})
             {
                 vtkMatrix4x4 *actorTransformMatrix = actors->GetUserMatrix();
@@ -647,8 +647,8 @@ void transformRepresentation::BuildRepresentation()
             }
 
             for (vtkProp3D *actors :
-                 {axisRingActors_[0], axisRingActors_[1], axisRingActors_[2],
-                  axisArrowActors_[0], axisArrowActors_[1], axisArrowActors_[2],
+                 {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+                  translateActors_[0], translateActors_[1], translateActors_[2],
                   dummyActor_})
             {
                 vtkMatrix4x4 *originMatrix = actors->GetUserMatrix();
@@ -711,7 +711,7 @@ void transformRepresentation::GetActors(vtkPropCollection *pc)
 {
     for (auto i = 0; i < 3; i++)
     {
-        pc->AddItem(axisRingActors_[i]);
-        pc->AddItem(axisArrowActors_[i]);
+        pc->AddItem(rotateActors_[i]);
+        pc->AddItem(translateActors_[i]);
     }
 }

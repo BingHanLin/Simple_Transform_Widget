@@ -44,8 +44,8 @@ class transformRepresentation : public vtkWidgetRepresentation
     const std::array<std::array<double, 3>, 3> axisNormalColor_ = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
-    std::array<vtkSmartPointer<vtkAssembly>, 3> axisRingActors_;
-    std::array<vtkSmartPointer<vtkAssembly>, 3> axisArrowActors_;
+    std::array<vtkSmartPointer<vtkAssembly>, 3> rotateActors_;
+    std::array<vtkSmartPointer<vtkAssembly>, 3> translateActors_;
     vtkSmartPointer<vtkAssembly> dummyActor_;
 
     vtkSmartPointer<vtkCellPicker> picker_;
