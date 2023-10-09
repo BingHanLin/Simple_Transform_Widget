@@ -328,7 +328,8 @@ void transformRepresentation::PlaceWidget(double bounds[6])
     const std::array<double, 3> maxPoint = {bounds[1], bounds[3], bounds[5]};
 
     const auto diagonalLength =
-        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data()) * 0.5;
+        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data()) *
+        0.75;
 
     for (auto actors :
          {rotateActors_[0], rotateActors_[1], rotateActors_[2],

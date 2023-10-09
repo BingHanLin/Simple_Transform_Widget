@@ -120,7 +120,7 @@ int main(int, char *[])
 
     // Add vtkCubeAxesActor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
-    cubeAxesActor->SetBounds(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
+    cubeAxesActor->SetBounds(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
     cubeAxesActor->SetCamera(renderer->GetActiveCamera());
     renderer->AddActor(cubeAxesActor);
 
