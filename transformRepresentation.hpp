@@ -18,7 +18,8 @@ class transformRepresentation : public vtkWidgetRepresentation
         onZRing,
         onXArrow,
         onYArrow,
-        onZArrow
+        onZArrow,
+        onScale
     };
 
     static transformRepresentation *New();
@@ -46,6 +47,7 @@ class transformRepresentation : public vtkWidgetRepresentation
 
     std::array<vtkSmartPointer<vtkAssembly>, 3> rotateActors_;
     std::array<vtkSmartPointer<vtkAssembly>, 3> translateActors_;
+    vtkSmartPointer<vtkAssembly> scaleActor_;
     vtkSmartPointer<vtkAssembly> dummyActor_;
 
     vtkSmartPointer<vtkCellPicker> picker_;

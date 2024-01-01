@@ -21,6 +21,10 @@
 
 vtkStandardNewMacro(transformRepresentation);
 
+const static double RING_RADIUS = 0.5;
+const static double RING_CROSS_SECTION_RADIUS = 0.025;
+const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
+
 transformRepresentation::transformRepresentation()
 {
     vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
@@ -35,17 +39,14 @@ transformRepresentation::transformRepresentation()
     const std::array<std::array<double, 3>, 3> coneDirection = {
         {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}}};
 
-    const double ringRadius = 0.5;
-    const double ringSectionRadius = 0.025;
-
     std::array<vtkSmartPointer<vtkActor>, 3> axisRingCircleActors;
     std::array<vtkSmartPointer<vtkActor>, 3> axisRingConeActors;
     for (auto i = 0; i < 3; i++)
     {
         {
             vtkNew<vtkParametricTorus> paramTorus;
-            paramTorus->SetRingRadius(ringRadius);
-            paramTorus->SetCrossSectionRadius(ringSectionRadius);
+            paramTorus->SetRingRadius(RING_RADIUS);
+            paramTorus->SetCrossSectionRadius(RING_CROSS_SECTION_RADIUS);
 
             vtkNew<vtkParametricFunctionSource> paramSource;
             paramSource->SetParametricFunction(paramTorus);
@@ -74,7 +75,7 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkConeSource> coneSource;
             coneSource->SetResolution(30);
-            coneSource->SetHeight(ringSectionRadius * 10);
+            coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
             coneSource->SetAngle(20);
             coneSource->SetDirection(coneDirection[i].data());
             coneSource->Update();
@@ -101,8 +102,8 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkCylinderSource> cylinderSource;
             cylinderSource->SetResolution(20);
-            cylinderSource->SetHeight(2 * ringRadius * 1.50);
-            cylinderSource->SetRadius(ringSectionRadius);
+            cylinderSource->SetHeight(2 * RING_RADIUS * 1.50);
+            cylinderSource->SetRadius(RING_CROSS_SECTION_RADIUS);
 
             vtkNew<vtkPolyDataMapper> mapper;
             mapper->SetInputConnection(cylinderSource->GetOutputPort());
@@ -119,11 +120,12 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkConeSource> startConeSource;
             startConeSource->SetResolution(20);
-            startConeSource->SetHeight(ringSectionRadius * 10);
+            startConeSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
             startConeSource->SetAngle(20);
-            startConeSource->SetCenter(lineDirection[i][0] * ringRadius * 1.50,
-                                       lineDirection[i][1] * ringRadius * 1.50,
-                                       lineDirection[i][2] * ringRadius * 1.50);
+            startConeSource->SetCenter(
+                lineDirection[i][0] * RING_RADIUS * 1.50,
+                lineDirection[i][1] * RING_RADIUS * 1.50,
+                lineDirection[i][2] * RING_RADIUS * 1.50);
             startConeSource->SetDirection(
                 lineDirection[i][0], lineDirection[i][1], lineDirection[i][2]);
             startConeSource->Update();
@@ -144,11 +146,11 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkConeSource> endConeSource;
             endConeSource->SetResolution(20);
-            endConeSource->SetHeight(ringSectionRadius * 10);
+            endConeSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
             endConeSource->SetAngle(20);
-            endConeSource->SetCenter(-lineDirection[i][0] * ringRadius * 1.50,
-                                     -lineDirection[i][1] * ringRadius * 1.50,
-                                     -lineDirection[i][2] * ringRadius * 1.50);
+            endConeSource->SetCenter(-lineDirection[i][0] * RING_RADIUS * 1.50,
+                                     -lineDirection[i][1] * RING_RADIUS * 1.50,
+                                     -lineDirection[i][2] * RING_RADIUS * 1.50);
             endConeSource->SetDirection(-lineDirection[i][0],
                                         -lineDirection[i][1],
                                         -lineDirection[i][2]);
@@ -191,21 +193,21 @@ transformRepresentation::transformRepresentation()
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(0.0, 0.0, -ringRadius);
+        trans->Translate(0.0, 0.0, -RING_RADIUS);
         axisRingConeActors[0]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(-ringRadius, 0.0, 0.0);
+        trans->Translate(-RING_RADIUS, 0.0, 0.0);
         axisRingConeActors[1]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(0.0, -ringRadius, 0.0);
+        trans->Translate(0.0, -RING_RADIUS, 0.0);
         axisRingConeActors[2]->SetUserTransform(trans);
     }
 
@@ -227,6 +229,34 @@ transformRepresentation::transformRepresentation()
             vtkSmartPointer<vtkTransform>::New();
         trans->RotateX(90);
         axisLineActors[2]->SetUserTransform(trans);
+    }
+
+    auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
+    {
+        const std::array<double, 3> direction = {1.0, 1.0, 1.0};
+
+        vtkNew<vtkConeSource> coneSource;
+        coneSource->SetResolution(30);
+        coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
+        coneSource->SetAngle(20);
+        coneSource->SetDirection(direction.data());
+        coneSource->Update();
+
+        vtkNew<vtkPolyDataMapper> mapper;
+        mapper->SetInputConnection(coneSource->GetOutputPort());
+
+        scaleConeActor = vtkSmartPointer<vtkActor>::New();
+        scaleConeActor->SetMapper(mapper);
+        scaleConeActor->GetProperty()->SetDiffuse(0.8);
+        scaleConeActor->GetProperty()->SetSpecular(0.5);
+        scaleConeActor->GetProperty()->SetSpecularPower(30.0);
+        // coneActor->GetProperty()->SetColor(1.0, 1.0, 1.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+        trans->Translate(SCALE_INDICATOR_POS, SCALE_INDICATOR_POS,
+                         SCALE_INDICATOR_POS);
+        scaleConeActor->SetUserTransform(trans);
     }
 
     for (auto i = 0; i < 3; i++)
@@ -259,6 +289,18 @@ transformRepresentation::transformRepresentation()
     }
 
     {
+        scaleActor_ = vtkSmartPointer<vtkAssembly>::New();
+        scaleActor_->AddPart(scaleConeActor);
+
+        scaleActor_->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        scaleActor_->SetUserTransform(trans);
+    }
+
+    {
         picker_ = vtkSmartPointer<vtkCellPicker>::New();
         picker_->SetTolerance(0.001);
         for (auto i = 0; i < 3; i++)
@@ -266,6 +308,8 @@ transformRepresentation::transformRepresentation()
             picker_->AddPickList(rotateActors_[i]);
             picker_->AddPickList(translateActors_[i]);
         }
+        picker_->AddPickList(scaleActor_);
+
         picker_->PickFromListOn();
     }
 
@@ -327,17 +371,20 @@ void transformRepresentation::PlaceWidget(double bounds[6])
     const std::array<double, 3> minPoint = {bounds[0], bounds[2], bounds[4]};
     const std::array<double, 3> maxPoint = {bounds[1], bounds[3], bounds[5]};
 
-    const auto diagonalLength =
-        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data()) *
-        0.75;
+    const auto newDiagonalLengthSquare =
+        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data());
+    const auto newDiagonalLength = sqrt(newDiagonalLengthSquare);
 
-    for (auto actors :
-         {rotateActors_[0], rotateActors_[1], rotateActors_[2],
-          translateActors_[0], translateActors_[1], translateActors_[2]})
+    const auto diagonalLength = (RING_RADIUS * 2.0) * sqrt(3);
+
+    for (auto actors : {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+                        translateActors_[0], translateActors_[1],
+                        translateActors_[2], scaleActor_})
     {
         vtkNew<vtkTransform> trans;
-        trans->Scale(diagonalLength / 1.0, diagonalLength / 1.0,
-                     diagonalLength / 1.0);
+        trans->Scale(newDiagonalLength / diagonalLength,
+                     newDiagonalLength / diagonalLength,
+                     newDiagonalLength / diagonalLength);
 
         vtkNew<vtkMatrix4x4> newMatrix;
         newMatrix->DeepCopy(trans->GetMatrix());
@@ -385,6 +432,10 @@ int transformRepresentation::ComputeInteractionState(int x, int y,
         {
             this->InteractionState = INTERACTIONSTATE::onZArrow;
         }
+        else if (currActor_ == scaleActor_)
+        {
+            this->InteractionState = INTERACTIONSTATE::onScale;
+        }
     }
     else
     {
@@ -401,9 +452,9 @@ void transformRepresentation::GetTransform(vtkTransform *t)
 
 void transformRepresentation::Highlight(int highlight)
 {
-    for (auto actors :
-         {rotateActors_[0], rotateActors_[1], rotateActors_[2],
-          translateActors_[0], translateActors_[1], translateActors_[2]})
+    for (auto actors : {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+                        translateActors_[0], translateActors_[1],
+                        translateActors_[2], scaleActor_})
     {
         vtkNew<vtkPropCollection> propsCollection;
         actors->GetActors(propsCollection);
@@ -451,6 +502,10 @@ void transformRepresentation::Highlight(int highlight)
         else if (state == INTERACTIONSTATE::onZArrow)
         {
             translateActors_[2]->GetActors(propsCollection);
+        }
+        else if (state == INTERACTIONSTATE::onScale)
+        {
+            scaleActor_->GetActors(propsCollection);
         }
 
         vtkCollectionSimpleIterator sIt;
@@ -505,7 +560,7 @@ void transformRepresentation::BuildRepresentation()
             for (auto actors :
                  {rotateActors_[0], rotateActors_[1], rotateActors_[2],
                   translateActors_[0], translateActors_[1], translateActors_[2],
-                  dummyActor_})
+                  scaleActor_, dummyActor_})
             {
                 vtkMatrix4x4 *actorTransformMatrix = actors->GetUserMatrix();
 
@@ -650,7 +705,7 @@ void transformRepresentation::BuildRepresentation()
             for (vtkProp3D *actors :
                  {rotateActors_[0], rotateActors_[1], rotateActors_[2],
                   translateActors_[0], translateActors_[1], translateActors_[2],
-                  dummyActor_})
+                  scaleActor_, dummyActor_})
             {
                 vtkMatrix4x4 *originMatrix = actors->GetUserMatrix();
 
@@ -703,6 +758,87 @@ void transformRepresentation::BuildRepresentation()
                 actors->SetUserMatrix(newMatrix);
             }
         }
+        else if (this->InteractionState == INTERACTIONSTATE::onScale)
+        {
+            const double dist =
+                vtkMath::Dot(prevEventWorldPosition_, currEventWorldPosition_);
+
+            const double direction[3] = {1.0, 1.0, 1.0};
+
+            for (vtkProp3D *actors :
+                 {rotateActors_[0], rotateActors_[1], rotateActors_[2],
+                  translateActors_[0], translateActors_[1], translateActors_[2],
+                  scaleActor_, dummyActor_})
+            {
+                vtkMatrix4x4 *originMatrix = actors->GetUserMatrix();
+
+                vtkNew<vtkMatrix4x4> newMatrix;
+                {
+                    vtkNew<vtkMatrix4x4> invertedMatrix;
+                    vtkMatrix4x4::Invert(originMatrix, invertedMatrix);
+
+                    const auto pos = invertedMatrix->MultiplyDoublePoint(
+                        currEventWorldPosition_.data());
+                    double originCurrPickedWorldPoint[3] = {pos[0], pos[1],
+                                                            pos[2]};
+
+                    double projectedCurrPickedPoint[3];
+                    {
+                        const double dist =
+                            vtkMath::Dot(originCurrPickedWorldPoint, direction);
+                        projectedCurrPickedPoint[0] = dist * direction[0];
+                        projectedCurrPickedPoint[1] = dist * direction[1];
+                        projectedCurrPickedPoint[2] = dist * direction[2];
+                    };
+
+                    const double origin[3] = {0.0, 0.0, 0.0};
+                    const double initialPoint[3] = {SCALE_INDICATOR_POS,
+                                                    SCALE_INDICATOR_POS,
+                                                    SCALE_INDICATOR_POS};
+
+                    const double projectedDiffSquare =
+                        vtkMath::Distance2BetweenPoints(
+                            origin, projectedCurrPickedPoint);
+                    const double projectedDiff = sqrt(projectedDiffSquare);
+
+                    const double initialDiffSquare =
+                        vtkMath::Distance2BetweenPoints(origin, initialPoint);
+                    const double initialDiff = sqrt(initialDiffSquare);
+
+                    const double ratio = projectedDiff / initialDiff;
+                    {
+                        const double translationX =
+                            originMatrix->GetElement(0, 3);
+                        const double translationY =
+                            originMatrix->GetElement(1, 3);
+                        const double translationZ =
+                            originMatrix->GetElement(2, 3);
+
+                        const double scaleX = originMatrix->GetElement(0, 0);
+                        const double scaleY = originMatrix->GetElement(1, 1);
+                        const double scaleZ = originMatrix->GetElement(2, 2);
+
+                        vtkNew<vtkTransform> trans;
+                        trans->PostMultiply();
+                        trans->SetMatrix(originMatrix);
+                        trans->Translate(-translationX, -translationY,
+                                         -translationZ);
+
+                        trans->Scale(1.0 / scaleX, 1.0 / scaleY, 1.0 / scaleZ);
+
+                        trans->Scale(ratio, ratio, ratio);
+
+                        std::cout << "ratio: " << ratio << std::endl;
+
+                        trans->Translate(translationX, translationY,
+                                         translationZ);
+
+                        newMatrix->DeepCopy(trans->GetMatrix());
+                    }
+                }
+                actors->SetUserMatrix(newMatrix);
+            }
+        }
 
         this->BuildTime.Modified();
     }
@@ -715,4 +851,6 @@ void transformRepresentation::GetActors(vtkPropCollection *pc)
         pc->AddItem(rotateActors_[i]);
         pc->AddItem(translateActors_[i]);
     }
+
+    pc->AddItem(scaleActor_);
 }

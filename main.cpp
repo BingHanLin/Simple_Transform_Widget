@@ -111,7 +111,7 @@ int main(int, char *[])
     vtkNew<transformWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
     myWidget->CreateDefaultRepresentation();
-    double bounds[6] = {-1.0, 1.0, -1.0, 1.0, -1.0, 1.0};
+    double bounds[6] = {-2.0, 2.0, -2.0, 2.0, -2.0, 2.0};
     myWidget->GetRepresentation()->PlaceWidget(bounds);
 
     vtkNew<transformCallback> callback;
@@ -120,7 +120,7 @@ int main(int, char *[])
 
     // Add vtkCubeAxesActor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
-    cubeAxesActor->SetBounds(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
+    cubeAxesActor->SetBounds(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     cubeAxesActor->SetCamera(renderer->GetActiveCamera());
     renderer->AddActor(cubeAxesActor);
 
