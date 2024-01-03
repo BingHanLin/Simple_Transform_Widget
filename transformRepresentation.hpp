@@ -48,10 +48,10 @@ class transformRepresentation : public vtkWidgetRepresentation
     std::array<vtkSmartPointer<vtkAssembly>, 3> rotateActors_;
     std::array<vtkSmartPointer<vtkAssembly>, 3> translateActors_;
     vtkSmartPointer<vtkAssembly> scaleActor_;
-    vtkSmartPointer<vtkAssembly> dummyActor_;
+
+    vtkSmartPointer<vtkAssembly> operationActor_;
 
     vtkSmartPointer<vtkCellPicker> picker_;
-    vtkProp3D *currActor_ = nullptr;
 
     std::array<double, 3> prevEventPosition_;
     std::array<double, 4> prevEventWorldPosition_;
