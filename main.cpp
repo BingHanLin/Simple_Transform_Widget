@@ -111,7 +111,7 @@ int main(int, char *[])
     vtkNew<transformWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
     myWidget->CreateDefaultRepresentation();
-    double bounds[6] = {-1.0, 3.0, -1.0, 3.0, -1.0, 3.0};
+    double bounds[6] = {-2.0, 4.0, -2.0, 4.0, -2.0, 4.0};
     myWidget->GetRepresentation()->PlaceWidget(bounds);
 
     vtkNew<transformCallback> callback;
