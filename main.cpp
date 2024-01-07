@@ -82,10 +82,9 @@ int main(int, char *[])
     vtkNew<vtkRenderer> renderer;
     vtkNew<vtkRenderWindow> renderWindow;
     renderWindow->AddRenderer(renderer);
-    renderWindow->SetWindowName("LineWidget2");
 
     // renderer->AddActor(actor);
-    renderer->SetBackground(colors->GetColor3d("MidnightBlue").GetData());
+    renderer->SetBackground(colors->GetColor3d("DarkBlue").GetData());
 
     // An interactor
     vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;

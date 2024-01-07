@@ -4,7 +4,7 @@
 
 This project implements a VTK (Visualization Toolkit) transform widget. This widget allows users to interactively manipulate 3D objects by applying translation and rotation.
 
-![Transform widget](./asset/fig1.png)
+![Transform widget](./asset/animation.gif)
 
 ## Features
 * Interactive 3D transformation widget.
