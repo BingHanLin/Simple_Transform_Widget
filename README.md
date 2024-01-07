@@ -8,7 +8,7 @@ This project implements a VTK (Visualization Toolkit) transform widget. This wid
 
 ## Features
 * Interactive 3D transformation widget.
-* Supports translation, rotation of 3D objects.
+* Supports translation, rotation ans scale of 3D objects.
 * Follow the widget/represent implementation to decouple Event Processing from Widget Geometry.
 * MIT License for easy integration into your own projects.
 
