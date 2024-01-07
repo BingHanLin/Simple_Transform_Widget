@@ -21,22 +21,18 @@
 
 vtkStandardNewMacro(transformRepresentation);
 
+const static double DEFAULT_SIZE = 1.0;
+const static double RING_RADIUS = 0.5;
+const static double RING_CROSS_SECTION_RADIUS = 0.025;
+const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
+
 transformRepresentation::transformRepresentation()
 {
-    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
-    trans->Identity();
-
-    dummyActor_ = vtkSmartPointer<vtkAssembly>::New();
-    dummyActor_->SetUserTransform(trans);
-
     const std::array<std::array<double, 3>, 3> lineDirection = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
     const std::array<std::array<double, 3>, 3> coneDirection = {
         {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}}};
-
-    const double ringRadius = 0.5;
-    const double ringSectionRadius = 0.025;
 
     std::array<vtkSmartPointer<vtkActor>, 3> axisRingCircleActors;
     std::array<vtkSmartPointer<vtkActor>, 3> axisRingConeActors;
@@ -44,8 +40,8 @@ transformRepresentation::transformRepresentation()
     {
         {
             vtkNew<vtkParametricTorus> paramTorus;
-            paramTorus->SetRingRadius(ringRadius);
-            paramTorus->SetCrossSectionRadius(ringSectionRadius);
+            paramTorus->SetRingRadius(RING_RADIUS);
+            paramTorus->SetCrossSectionRadius(RING_CROSS_SECTION_RADIUS);
 
             vtkNew<vtkParametricFunctionSource> paramSource;
             paramSource->SetParametricFunction(paramTorus);
@@ -74,7 +70,7 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkConeSource> coneSource;
             coneSource->SetResolution(30);
-            coneSource->SetHeight(ringSectionRadius * 10);
+            coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
             coneSource->SetAngle(20);
             coneSource->SetDirection(coneDirection[i].data());
             coneSource->Update();
@@ -101,8 +97,8 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkCylinderSource> cylinderSource;
             cylinderSource->SetResolution(20);
-            cylinderSource->SetHeight(2 * ringRadius * 1.50);
-            cylinderSource->SetRadius(ringSectionRadius);
+            cylinderSource->SetHeight(2 * RING_RADIUS * 1.50);
+            cylinderSource->SetRadius(RING_CROSS_SECTION_RADIUS);
 
             vtkNew<vtkPolyDataMapper> mapper;
             mapper->SetInputConnection(cylinderSource->GetOutputPort());
@@ -119,11 +115,12 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkConeSource> startConeSource;
             startConeSource->SetResolution(20);
-            startConeSource->SetHeight(ringSectionRadius * 10);
+            startConeSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
             startConeSource->SetAngle(20);
-            startConeSource->SetCenter(lineDirection[i][0] * ringRadius * 1.50,
-                                       lineDirection[i][1] * ringRadius * 1.50,
-                                       lineDirection[i][2] * ringRadius * 1.50);
+            startConeSource->SetCenter(
+                lineDirection[i][0] * RING_RADIUS * 1.50,
+                lineDirection[i][1] * RING_RADIUS * 1.50,
+                lineDirection[i][2] * RING_RADIUS * 1.50);
             startConeSource->SetDirection(
                 lineDirection[i][0], lineDirection[i][1], lineDirection[i][2]);
             startConeSource->Update();
@@ -144,11 +141,11 @@ transformRepresentation::transformRepresentation()
         {
             vtkNew<vtkConeSource> endConeSource;
             endConeSource->SetResolution(20);
-            endConeSource->SetHeight(ringSectionRadius * 10);
+            endConeSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
             endConeSource->SetAngle(20);
-            endConeSource->SetCenter(-lineDirection[i][0] * ringRadius * 1.50,
-                                     -lineDirection[i][1] * ringRadius * 1.50,
-                                     -lineDirection[i][2] * ringRadius * 1.50);
+            endConeSource->SetCenter(-lineDirection[i][0] * RING_RADIUS * 1.50,
+                                     -lineDirection[i][1] * RING_RADIUS * 1.50,
+                                     -lineDirection[i][2] * RING_RADIUS * 1.50);
             endConeSource->SetDirection(-lineDirection[i][0],
                                         -lineDirection[i][1],
                                         -lineDirection[i][2]);
@@ -191,21 +188,21 @@ transformRepresentation::transformRepresentation()
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(0.0, 0.0, -ringRadius);
+        trans->Translate(0.0, 0.0, -RING_RADIUS);
         axisRingConeActors[0]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(-ringRadius, 0.0, 0.0);
+        trans->Translate(-RING_RADIUS, 0.0, 0.0);
         axisRingConeActors[1]->SetUserTransform(trans);
     }
 
     {
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(0.0, -ringRadius, 0.0);
+        trans->Translate(0.0, -RING_RADIUS, 0.0);
         axisRingConeActors[2]->SetUserTransform(trans);
     }
 
@@ -227,6 +224,34 @@ transformRepresentation::transformRepresentation()
             vtkSmartPointer<vtkTransform>::New();
         trans->RotateX(90);
         axisLineActors[2]->SetUserTransform(trans);
+    }
+
+    auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
+    {
+        const std::array<double, 3> direction = {1.0, 1.0, 1.0};
+
+        vtkNew<vtkConeSource> coneSource;
+        coneSource->SetResolution(30);
+        coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
+        coneSource->SetAngle(20);
+        coneSource->SetDirection(direction.data());
+        coneSource->Update();
+
+        vtkNew<vtkPolyDataMapper> mapper;
+        mapper->SetInputConnection(coneSource->GetOutputPort());
+
+        scaleConeActor = vtkSmartPointer<vtkActor>::New();
+        scaleConeActor->SetMapper(mapper);
+        scaleConeActor->GetProperty()->SetDiffuse(0.8);
+        scaleConeActor->GetProperty()->SetSpecular(0.5);
+        scaleConeActor->GetProperty()->SetSpecularPower(30.0);
+        // coneActor->GetProperty()->SetColor(1.0, 1.0, 1.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+        trans->Translate(SCALE_INDICATOR_POS, SCALE_INDICATOR_POS,
+                         SCALE_INDICATOR_POS);
+        scaleConeActor->SetUserTransform(trans);
     }
 
     for (auto i = 0; i < 3; i++)
@@ -259,24 +284,51 @@ transformRepresentation::transformRepresentation()
     }
 
     {
-        picker_ = vtkSmartPointer<vtkCellPicker>::New();
-        picker_->SetTolerance(0.001);
+        scaleActor_ = vtkSmartPointer<vtkAssembly>::New();
+        scaleActor_->AddPart(scaleConeActor);
+
+        scaleActor_->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        scaleActor_->SetUserTransform(trans);
+    }
+
+    {
+        assembleActor_ = vtkSmartPointer<vtkAssembly>::New();
+
         for (auto i = 0; i < 3; i++)
         {
-            picker_->AddPickList(rotateActors_[i]);
-            picker_->AddPickList(translateActors_[i]);
+            assembleActor_->AddPart(rotateActors_[i]);
+            assembleActor_->AddPart(translateActors_[i]);
         }
+        assembleActor_->AddPart(scaleActor_);
+
+        assembleActor_->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        assembleActor_->SetUserTransform(trans);
+    }
+
+    {
+        picker_ = vtkSmartPointer<vtkCellPicker>::New();
+        picker_->SetTolerance(0.001);
+        picker_->AddPickList(assembleActor_);
+
         picker_->PickFromListOn();
     }
 
     // Define the point coordinates
     double bounds[6];
-    bounds[0] = -0.5;
-    bounds[1] = 0.5;
-    bounds[2] = -0.5;
-    bounds[3] = 0.5;
-    bounds[4] = -0.5;
-    bounds[5] = 0.5;
+    bounds[0] = -DEFAULT_SIZE;
+    bounds[1] = DEFAULT_SIZE;
+    bounds[2] = -DEFAULT_SIZE;
+    bounds[3] = DEFAULT_SIZE;
+    bounds[4] = -DEFAULT_SIZE;
+    bounds[5] = DEFAULT_SIZE;
     this->PlaceWidget(bounds);
 }
 
@@ -323,27 +375,34 @@ void transformRepresentation::WidgetInteraction(double e[2])
 
 void transformRepresentation::PlaceWidget(double bounds[6])
 {
-    // xmin,xmax,ymin,ymax,zmin,
+    // bounds[6]: xmin, xmax, ymin, ymax, zmin
     const std::array<double, 3> minPoint = {bounds[0], bounds[2], bounds[4]};
     const std::array<double, 3> maxPoint = {bounds[1], bounds[3], bounds[5]};
 
-    const auto diagonalLength =
-        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data()) *
-        0.75;
+    const auto newDiagonalLengthSquare =
+        vtkMath::Distance2BetweenPoints(minPoint.data(), maxPoint.data());
+    const auto newDiagonalLength = sqrt(newDiagonalLengthSquare);
 
-    for (auto actors :
-         {rotateActors_[0], rotateActors_[1], rotateActors_[2],
-          translateActors_[0], translateActors_[1], translateActors_[2]})
-    {
-        vtkNew<vtkTransform> trans;
-        trans->Scale(diagonalLength / 1.0, diagonalLength / 1.0,
-                     diagonalLength / 1.0);
+    const auto diagonalLength = (RING_RADIUS * 2.0) * sqrt(3);
 
-        vtkNew<vtkMatrix4x4> newMatrix;
-        newMatrix->DeepCopy(trans->GetMatrix());
+    const std::array<double, 3> placeScale = {
+        newDiagonalLength / diagonalLength, newDiagonalLength / diagonalLength,
+        newDiagonalLength / diagonalLength};
 
-        actors->SetUserMatrix(newMatrix);
-    }
+    const std::array<double, 3> placeCenter = {
+        (minPoint[0] + maxPoint[0]) * 0.5, (minPoint[1] + maxPoint[1]) * 0.5,
+        (minPoint[2] + maxPoint[2]) * 0.5};
+
+    placeCenter_ = placeCenter;
+    placeScale_ = placeScale;
+
+    vtkNew<vtkTransform> trans;
+    trans->PostMultiply();
+
+    trans->Scale(placeScale.data());
+    trans->Translate(placeCenter.data());
+
+    assembleActor_->SetUserTransform(trans);
 }
 
 int transformRepresentation::ComputeInteractionState(int x, int y,
@@ -355,40 +414,46 @@ int transformRepresentation::ComputeInteractionState(int x, int y,
         return this->InteractionState;
     }
 
+    this->InteractionState = INTERACTIONSTATE::outside;
+
     auto path = this->GetAssemblyPath(x, y, 0., picker_);
     if (path != nullptr)
     {
-        currActor_ =
-            reinterpret_cast<vtkProp3D *>(path->GetFirstNode()->GetViewProp());
+        vtkCollectionSimpleIterator simpleIt;
+        path->InitTraversal(simpleIt);
+        for (int i = 0; i < path->GetNumberOfItems(); i++)
+        {
+            auto pickedActor = path->GetNextNode(simpleIt)->GetViewProp();
 
-        if (currActor_ == rotateActors_[0])
-        {
-            this->InteractionState = INTERACTIONSTATE::onXRing;
+            if (pickedActor == rotateActors_[0])
+            {
+                this->InteractionState = INTERACTIONSTATE::onXRing;
+            }
+            else if (pickedActor == rotateActors_[1])
+            {
+                this->InteractionState = INTERACTIONSTATE::onYRing;
+            }
+            else if (pickedActor == rotateActors_[2])
+            {
+                this->InteractionState = INTERACTIONSTATE::onZRing;
+            }
+            else if (pickedActor == translateActors_[0])
+            {
+                this->InteractionState = INTERACTIONSTATE::onXArrow;
+            }
+            else if (pickedActor == translateActors_[1])
+            {
+                this->InteractionState = INTERACTIONSTATE::onYArrow;
+            }
+            else if (pickedActor == translateActors_[2])
+            {
+                this->InteractionState = INTERACTIONSTATE::onZArrow;
+            }
+            else if (pickedActor == scaleActor_)
+            {
+                this->InteractionState = INTERACTIONSTATE::onScale;
+            }
         }
-        else if (currActor_ == rotateActors_[1])
-        {
-            this->InteractionState = INTERACTIONSTATE::onYRing;
-        }
-        else if (currActor_ == rotateActors_[2])
-        {
-            this->InteractionState = INTERACTIONSTATE::onZRing;
-        }
-        else if (currActor_ == translateActors_[0])
-        {
-            this->InteractionState = INTERACTIONSTATE::onXArrow;
-        }
-        else if (currActor_ == translateActors_[1])
-        {
-            this->InteractionState = INTERACTIONSTATE::onYArrow;
-        }
-        else if (currActor_ == translateActors_[2])
-        {
-            this->InteractionState = INTERACTIONSTATE::onZArrow;
-        }
-    }
-    else
-    {
-        this->InteractionState = INTERACTIONSTATE::outside;
     }
 
     return this->InteractionState;
@@ -396,30 +461,31 @@ int transformRepresentation::ComputeInteractionState(int x, int y,
 
 void transformRepresentation::GetTransform(vtkTransform *t)
 {
-    t->SetMatrix(dummyActor_->GetUserMatrix());
+    t->Identity();
+    t->PostMultiply();
+
+    t->Translate(-placeCenter_[0], -placeCenter_[1], -placeCenter_[2]);
+    t->Scale(1.0 / placeScale_[0], 1.0 / placeScale_[1], 1.0 / placeScale_[2]);
+
+    t->Concatenate(assembleActor_->GetUserMatrix());
 }
 
 void transformRepresentation::Highlight(int highlight)
 {
-    for (auto actors :
-         {rotateActors_[0], rotateActors_[1], rotateActors_[2],
-          translateActors_[0], translateActors_[1], translateActors_[2]})
-    {
-        vtkNew<vtkPropCollection> propsCollection;
-        actors->GetActors(propsCollection);
+    vtkNew<vtkPropCollection> propsCollection;
+    assembleActor_->GetActors(propsCollection);
 
-        vtkCollectionSimpleIterator sIt;
-        propsCollection->InitTraversal(sIt);
-        const int nProps = propsCollection->GetNumberOfItems();
-        for (int i = 0; i < nProps; i++)
+    vtkCollectionSimpleIterator sIt;
+    propsCollection->InitTraversal(sIt);
+    const int nProps = propsCollection->GetNumberOfItems();
+    for (int i = 0; i < nProps; i++)
+    {
+        vtkActor *actor =
+            vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
+        if (actor != nullptr)
         {
-            vtkActor *actor =
-                vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
-            if (actor != nullptr)
-            {
-                actor->GetProperty()->SetDiffuse(0.8);
-                actor->GetProperty()->SetSpecular(0.5);
-            }
+            actor->GetProperty()->SetDiffuse(0.8);
+            actor->GetProperty()->SetSpecular(0.5);
         }
     }
 
@@ -452,6 +518,10 @@ void transformRepresentation::Highlight(int highlight)
         {
             translateActors_[2]->GetActors(propsCollection);
         }
+        else if (state == INTERACTIONSTATE::onScale)
+        {
+            scaleActor_->GetActors(propsCollection);
+        }
 
         vtkCollectionSimpleIterator sIt;
         propsCollection->InitTraversal(sIt);
@@ -480,147 +550,127 @@ void transformRepresentation::BuildRepresentation()
             this->InteractionState == INTERACTIONSTATE::onYRing ||
             this->InteractionState == INTERACTIONSTATE::onZRing)
         {
-            double originPoint[4] = {0.0, 0.0, 0.0, 1.0};
+            const double originPoint[4] = {0.0, 0.0, 0.0, 1.0};
 
             double normalAxisEndPoint[4] = {0.0, 0.0, 0.0, 1.0};
-            if (this->InteractionState == INTERACTIONSTATE::onXRing)
             {
-                normalAxisEndPoint[0] = 1.0;
-                normalAxisEndPoint[1] = 0.0;
-                normalAxisEndPoint[2] = 0.0;
-            }
-            else if (this->InteractionState == INTERACTIONSTATE::onYRing)
-            {
-                normalAxisEndPoint[0] = 0.0;
-                normalAxisEndPoint[1] = 1.0;
-                normalAxisEndPoint[2] = 0.0;
-            }
-            else
-            {
-                normalAxisEndPoint[0] = 0.0;
-                normalAxisEndPoint[1] = 0.0;
-                normalAxisEndPoint[2] = 1.0;
-            }
-
-            for (auto actors :
-                 {rotateActors_[0], rotateActors_[1], rotateActors_[2],
-                  translateActors_[0], translateActors_[1], translateActors_[2],
-                  dummyActor_})
-            {
-                vtkMatrix4x4 *actorTransformMatrix = actors->GetUserMatrix();
-
-                vtkNew<vtkMatrix4x4> newMatrix;
+                if (this->InteractionState == INTERACTIONSTATE::onXRing)
                 {
-                    double tranformedOriginPoint[4];
-                    actorTransformMatrix->MultiplyPoint(originPoint,
-                                                        tranformedOriginPoint);
-
-                    double tranformedNormalAxisEndPoint[4];
-                    actorTransformMatrix->MultiplyPoint(
-                        normalAxisEndPoint, tranformedNormalAxisEndPoint);
-
-                    double projectedPrevPickedPoint[3];
-                    {
-                        const double vec[3] = {prevEventWorldPosition_[0] -
-                                                   tranformedOriginPoint[0],
-                                               prevEventWorldPosition_[1] -
-                                                   tranformedOriginPoint[1],
-                                               prevEventWorldPosition_[2] -
-                                                   tranformedOriginPoint[2]};
-
-                        double unitNormal[3] = {
-                            tranformedNormalAxisEndPoint[0] -
-                                tranformedOriginPoint[0],
-                            tranformedNormalAxisEndPoint[1] -
-                                tranformedOriginPoint[1],
-                            tranformedNormalAxisEndPoint[2] -
-                                tranformedOriginPoint[2]};
-
-                        vtkMath::Normalize(unitNormal);
-
-                        const double dist = vtkMath::Dot(vec, unitNormal);
-
-                        projectedPrevPickedPoint[0] =
-                            prevEventWorldPosition_[0] - dist * unitNormal[0];
-                        projectedPrevPickedPoint[1] =
-                            prevEventWorldPosition_[1] - dist * unitNormal[1];
-                        projectedPrevPickedPoint[2] =
-                            prevEventWorldPosition_[2] - dist * unitNormal[2];
-                    }
-
-                    double projectedCurrPickedPoint[3];
-                    {
-                        const double vec[3] = {currEventWorldPosition_[0] -
-                                                   tranformedOriginPoint[0],
-                                               currEventWorldPosition_[1] -
-                                                   tranformedOriginPoint[1],
-                                               currEventWorldPosition_[2] -
-                                                   tranformedOriginPoint[2]};
-
-                        double unitNormal[3] = {
-                            tranformedNormalAxisEndPoint[0] -
-                                tranformedOriginPoint[0],
-                            tranformedNormalAxisEndPoint[1] -
-                                tranformedOriginPoint[1],
-                            tranformedNormalAxisEndPoint[2] -
-                                tranformedOriginPoint[2]};
-
-                        vtkMath::Normalize(unitNormal);
-
-                        const double dist = vtkMath::Dot(vec, unitNormal);
-                        projectedCurrPickedPoint[0] =
-                            currEventWorldPosition_[0] - dist * unitNormal[0];
-                        projectedCurrPickedPoint[1] =
-                            currEventWorldPosition_[1] - dist * unitNormal[1];
-                        projectedCurrPickedPoint[2] =
-                            currEventWorldPosition_[2] - dist * unitNormal[2];
-                    }
-
-                    double projectedPrevPickedVec[3] = {
-                        projectedPrevPickedPoint[0] - tranformedOriginPoint[0],
-                        projectedPrevPickedPoint[1] - tranformedOriginPoint[1],
-                        projectedPrevPickedPoint[2] - tranformedOriginPoint[2]};
-
-                    double projectedCurrPickedVec[3] = {
-                        projectedCurrPickedPoint[0] - tranformedOriginPoint[0],
-                        projectedCurrPickedPoint[1] - tranformedOriginPoint[1],
-                        projectedCurrPickedPoint[2] - tranformedOriginPoint[2]};
-
-                    vtkMath::Normalize(projectedPrevPickedVec);
-                    vtkMath::Normalize(projectedCurrPickedVec);
-
-                    double rotateAxis[3];
-                    vtkMath::Cross(projectedPrevPickedVec,
-                                   projectedCurrPickedVec, rotateAxis);
-
-                    const auto dot = vtkMath::Dot(projectedPrevPickedVec,
-                                                  projectedCurrPickedVec);
-                    const double angleRadians = std::acos(dot);
-
-                    const double angleDegrees =
-                        vtkMath::DegreesFromRadians(angleRadians);
-
-                    {
-                        const double translationX =
-                            actorTransformMatrix->GetElement(0, 3);
-                        const double translationY =
-                            actorTransformMatrix->GetElement(1, 3);
-                        const double translationZ =
-                            actorTransformMatrix->GetElement(2, 3);
-
-                        vtkNew<vtkTransform> trans;
-                        trans->PostMultiply();
-                        trans->SetMatrix(actorTransformMatrix);
-                        trans->Translate(-translationX, -translationY,
-                                         -translationZ);
-                        trans->RotateWXYZ(angleDegrees, rotateAxis);
-                        trans->Translate(translationX, translationY,
-                                         translationZ);
-
-                        newMatrix->DeepCopy(trans->GetMatrix());
-                    }
+                    normalAxisEndPoint[0] = 1.0;
+                    normalAxisEndPoint[1] = 0.0;
+                    normalAxisEndPoint[2] = 0.0;
                 }
-                actors->SetUserMatrix(newMatrix);
+                else if (this->InteractionState == INTERACTIONSTATE::onYRing)
+                {
+                    normalAxisEndPoint[0] = 0.0;
+                    normalAxisEndPoint[1] = 1.0;
+                    normalAxisEndPoint[2] = 0.0;
+                }
+                else
+                {
+                    normalAxisEndPoint[0] = 0.0;
+                    normalAxisEndPoint[1] = 0.0;
+                    normalAxisEndPoint[2] = 1.0;
+                }
+            }
+
+            vtkMatrix4x4 *originMatrix = assembleActor_->GetUserMatrix();
+
+            double tranformedOriginPoint[4];
+            originMatrix->MultiplyPoint(originPoint, tranformedOriginPoint);
+
+            double tranformedNormalAxisEndPoint[4];
+            originMatrix->MultiplyPoint(normalAxisEndPoint,
+                                        tranformedNormalAxisEndPoint);
+
+            double projectedPrevPickedPoint[3];
+            {
+                const double vec[3] = {
+                    prevEventWorldPosition_[0] - tranformedOriginPoint[0],
+                    prevEventWorldPosition_[1] - tranformedOriginPoint[1],
+                    prevEventWorldPosition_[2] - tranformedOriginPoint[2]};
+
+                double unitNormal[3] = {
+                    tranformedNormalAxisEndPoint[0] - tranformedOriginPoint[0],
+                    tranformedNormalAxisEndPoint[1] - tranformedOriginPoint[1],
+                    tranformedNormalAxisEndPoint[2] - tranformedOriginPoint[2]};
+
+                vtkMath::Normalize(unitNormal);
+
+                const double dist = vtkMath::Dot(vec, unitNormal);
+
+                projectedPrevPickedPoint[0] =
+                    prevEventWorldPosition_[0] - dist * unitNormal[0];
+                projectedPrevPickedPoint[1] =
+                    prevEventWorldPosition_[1] - dist * unitNormal[1];
+                projectedPrevPickedPoint[2] =
+                    prevEventWorldPosition_[2] - dist * unitNormal[2];
+            }
+
+            double projectedCurrPickedPoint[3];
+            {
+                const double vec[3] = {
+                    currEventWorldPosition_[0] - tranformedOriginPoint[0],
+                    currEventWorldPosition_[1] - tranformedOriginPoint[1],
+                    currEventWorldPosition_[2] - tranformedOriginPoint[2]};
+
+                double unitNormal[3] = {
+                    tranformedNormalAxisEndPoint[0] - tranformedOriginPoint[0],
+                    tranformedNormalAxisEndPoint[1] - tranformedOriginPoint[1],
+                    tranformedNormalAxisEndPoint[2] - tranformedOriginPoint[2]};
+
+                vtkMath::Normalize(unitNormal);
+
+                const double dist = vtkMath::Dot(vec, unitNormal);
+                projectedCurrPickedPoint[0] =
+                    currEventWorldPosition_[0] - dist * unitNormal[0];
+                projectedCurrPickedPoint[1] =
+                    currEventWorldPosition_[1] - dist * unitNormal[1];
+                projectedCurrPickedPoint[2] =
+                    currEventWorldPosition_[2] - dist * unitNormal[2];
+            }
+
+            double projectedPrevPickedVec[3] = {
+                projectedPrevPickedPoint[0] - tranformedOriginPoint[0],
+                projectedPrevPickedPoint[1] - tranformedOriginPoint[1],
+                projectedPrevPickedPoint[2] - tranformedOriginPoint[2]};
+
+            double projectedCurrPickedVec[3] = {
+                projectedCurrPickedPoint[0] - tranformedOriginPoint[0],
+                projectedCurrPickedPoint[1] - tranformedOriginPoint[1],
+                projectedCurrPickedPoint[2] - tranformedOriginPoint[2]};
+
+            vtkMath::Normalize(projectedPrevPickedVec);
+            vtkMath::Normalize(projectedCurrPickedVec);
+
+            double rotateAxis[3];
+            vtkMath::Cross(projectedPrevPickedVec, projectedCurrPickedVec,
+                           rotateAxis);
+
+            const auto dot =
+                vtkMath::Dot(projectedPrevPickedVec, projectedCurrPickedVec);
+            const double angleRadians = std::acos(dot);
+
+            const double angleDegrees =
+                vtkMath::DegreesFromRadians(angleRadians);
+
+            {
+                vtkNew<vtkTransform> trans;
+                trans->PostMultiply();
+                trans->SetMatrix(originMatrix);
+
+                std::array<double, 3> positionValues;
+                trans->GetPosition(positionValues.data());
+
+                trans->Translate(-positionValues[0], -positionValues[1],
+                                 -positionValues[2]);
+
+                trans->RotateWXYZ(angleDegrees, rotateAxis);
+
+                trans->Translate(positionValues[0], positionValues[1],
+                                 positionValues[2]);
+
+                assembleActor_->SetUserTransform(trans);
             }
         }
         else if (this->InteractionState == INTERACTIONSTATE::onXArrow ||
@@ -628,79 +678,151 @@ void transformRepresentation::BuildRepresentation()
                  this->InteractionState == INTERACTIONSTATE::onZArrow)
         {
             double direction[3];
-            if (this->InteractionState == INTERACTIONSTATE::onXArrow)
             {
-                direction[0] = 1.0;
-                direction[1] = 0.0;
-                direction[2] = 0.0;
-            }
-            else if (this->InteractionState == INTERACTIONSTATE::onYArrow)
-            {
-                direction[0] = 0.0;
-                direction[1] = 1.0;
-                direction[2] = 0.0;
-            }
-            else
-            {
-                direction[0] = 0.0;
-                direction[1] = 0.0;
-                direction[2] = 1.0;
-            }
-
-            for (vtkProp3D *actors :
-                 {rotateActors_[0], rotateActors_[1], rotateActors_[2],
-                  translateActors_[0], translateActors_[1], translateActors_[2],
-                  dummyActor_})
-            {
-                vtkMatrix4x4 *originMatrix = actors->GetUserMatrix();
-
-                vtkNew<vtkMatrix4x4> newMatrix;
+                if (this->InteractionState == INTERACTIONSTATE::onXArrow)
                 {
-                    vtkNew<vtkMatrix4x4> invertedMatrix;
-                    vtkMatrix4x4::Invert(originMatrix, invertedMatrix);
-
-                    auto pos = invertedMatrix->MultiplyDoublePoint(
-                        prevEventWorldPosition_.data());
-                    double originPrevPickedWorldPoint[3] = {pos[0], pos[1],
-                                                            pos[2]};
-
-                    pos = invertedMatrix->MultiplyDoublePoint(
-                        currEventWorldPosition_.data());
-                    double originCurrPickedWorldPoint[3] = {pos[0], pos[1],
-                                                            pos[2]};
-
-                    double projectedPrevPickedPoint[3];
-                    {
-                        const double dist =
-                            vtkMath::Dot(originPrevPickedWorldPoint, direction);
-                        projectedPrevPickedPoint[0] = dist * direction[0];
-                        projectedPrevPickedPoint[1] = dist * direction[1];
-                        projectedPrevPickedPoint[2] = dist * direction[2];
-                    }
-
-                    double projectedCurrPickedPoint[3];
-                    {
-                        const double dist =
-                            vtkMath::Dot(originCurrPickedWorldPoint, direction);
-                        projectedCurrPickedPoint[0] = dist * direction[0];
-                        projectedCurrPickedPoint[1] = dist * direction[1];
-                        projectedCurrPickedPoint[2] = dist * direction[2];
-                    }
-
-                    double projectedDiff[3];
-                    vtkMath::Subtract(projectedCurrPickedPoint,
-                                      projectedPrevPickedPoint, projectedDiff);
-
-                    {
-                        vtkNew<vtkTransform> trans;
-                        trans->SetMatrix(originMatrix);
-                        trans->Translate(direction[0] * projectedDiff[0],
-                                         direction[1] * projectedDiff[1],
-                                         direction[2] * projectedDiff[2]);
-                        newMatrix->DeepCopy(trans->GetMatrix());
-                    }
+                    direction[0] = 1.0;
+                    direction[1] = 0.0;
+                    direction[2] = 0.0;
                 }
-                actors->SetUserMatrix(newMatrix);
+                else if (this->InteractionState == INTERACTIONSTATE::onYArrow)
+                {
+                    direction[0] = 0.0;
+                    direction[1] = 1.0;
+                    direction[2] = 0.0;
+                }
+                else
+                {
+                    direction[0] = 0.0;
+                    direction[1] = 0.0;
+                    direction[2] = 1.0;
+                }
+            }
+
+            vtkMatrix4x4 *originMatrix = assembleActor_->GetUserMatrix();
+            vtkNew<vtkMatrix4x4> invertedMatrix;
+            vtkMatrix4x4::Invert(originMatrix, invertedMatrix);
+
+            auto pos = invertedMatrix->MultiplyDoublePoint(
+                prevEventWorldPosition_.data());
+            double originPrevPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
+
+            pos = invertedMatrix->MultiplyDoublePoint(
+                currEventWorldPosition_.data());
+            double originCurrPickedWorldPoint[3] = {pos[0], pos[1], pos[2]};
+
+            double projectedPrevPickedPoint[3];
+            {
+                const double dist =
+                    vtkMath::Dot(originPrevPickedWorldPoint, direction);
+                projectedPrevPickedPoint[0] = dist * direction[0];
+                projectedPrevPickedPoint[1] = dist * direction[1];
+                projectedPrevPickedPoint[2] = dist * direction[2];
+            }
+
+            double projectedCurrPickedPoint[3];
+            {
+                const double dist =
+                    vtkMath::Dot(originCurrPickedWorldPoint, direction);
+                projectedCurrPickedPoint[0] = dist * direction[0];
+                projectedCurrPickedPoint[1] = dist * direction[1];
+                projectedCurrPickedPoint[2] = dist * direction[2];
+            }
+
+            double projectedDiff[3];
+            vtkMath::Subtract(projectedCurrPickedPoint,
+                              projectedPrevPickedPoint, projectedDiff);
+
+            {
+                vtkNew<vtkTransform> trans;
+                trans->SetMatrix(originMatrix);
+                trans->Translate(direction[0] * projectedDiff[0],
+                                 direction[1] * projectedDiff[1],
+                                 direction[2] * projectedDiff[2]);
+
+                assembleActor_->SetUserTransform(trans);
+            }
+        }
+        else if (this->InteractionState == INTERACTIONSTATE::onScale)
+        {
+            const double direction[3] = {1.0, 1.0, 1.0};
+
+            vtkNew<vtkMatrix4x4> originMatrix;
+            originMatrix->DeepCopy(assembleActor_->GetUserMatrix());
+
+            {
+                vtkNew<vtkMatrix4x4> invertedMatrix;
+                vtkMatrix4x4::Invert(originMatrix, invertedMatrix);
+
+                auto pos = invertedMatrix->MultiplyDoublePoint(
+                    prevEventWorldPosition_.data());
+                const double originPrevPickedWorldPoint[3] = {pos[0], pos[1],
+                                                              pos[2]};
+
+                pos = invertedMatrix->MultiplyDoublePoint(
+                    currEventWorldPosition_.data());
+                const double originCurrPickedWorldPoint[3] = {pos[0], pos[1],
+                                                              pos[2]};
+
+                double projectedPrevPickedPoint[3];
+                {
+                    const double dist =
+                        vtkMath::Dot(originPrevPickedWorldPoint, direction);
+                    projectedPrevPickedPoint[0] = dist * direction[0];
+                    projectedPrevPickedPoint[1] = dist * direction[1];
+                    projectedPrevPickedPoint[2] = dist * direction[2];
+                }
+
+                double projectedCurrPickedPoint[3];
+                {
+                    const double dist =
+                        vtkMath::Dot(originCurrPickedWorldPoint, direction);
+                    projectedCurrPickedPoint[0] = dist * direction[0];
+                    projectedCurrPickedPoint[1] = dist * direction[1];
+                    projectedCurrPickedPoint[2] = dist * direction[2];
+                };
+
+                std::array<double, 3> originScaleValues;
+                vtkNew<vtkTransform> trans;
+                trans->SetMatrix(originMatrix);
+                trans->GetScale(originScaleValues.data());
+
+                const double origin[3] = {0.0, 0.0, 0.0};
+                const double initialPoint[3] = {
+                    SCALE_INDICATOR_POS * originScaleValues[0],
+                    SCALE_INDICATOR_POS * originScaleValues[1],
+                    SCALE_INDICATOR_POS * originScaleValues[2]};
+
+                const double projectedCurrDiffSquare =
+                    vtkMath::Distance2BetweenPoints(origin,
+                                                    projectedCurrPickedPoint);
+                const double projectedCurrDiff = sqrt(projectedCurrDiffSquare);
+
+                const double projectedPreviffSquare =
+                    vtkMath::Distance2BetweenPoints(origin,
+                                                    projectedPrevPickedPoint);
+                const double projectedPrevDiff = sqrt(projectedPreviffSquare);
+
+                const double ratio = projectedCurrDiff / projectedPrevDiff;
+
+                {
+                    vtkNew<vtkTransform> trans;
+                    trans->PostMultiply();
+                    trans->SetMatrix(originMatrix);
+
+                    std::array<double, 3> positionValues;
+                    trans->GetPosition(positionValues.data());
+
+                    trans->Translate(-positionValues[0], -positionValues[1],
+                                     -positionValues[2]);
+
+                    trans->Scale(ratio, ratio, ratio);
+
+                    trans->Translate(positionValues[0], positionValues[1],
+                                     positionValues[2]);
+
+                    assembleActor_->SetUserTransform(trans);
+                }
             }
         }
 
@@ -710,9 +832,5 @@ void transformRepresentation::BuildRepresentation()
 
 void transformRepresentation::GetActors(vtkPropCollection *pc)
 {
-    for (auto i = 0; i < 3; i++)
-    {
-        pc->AddItem(rotateActors_[i]);
-        pc->AddItem(translateActors_[i]);
-    }
+    pc->AddItem(assembleActor_);
 }

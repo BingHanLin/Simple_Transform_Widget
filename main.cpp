@@ -82,10 +82,9 @@ int main(int, char *[])
     vtkNew<vtkRenderer> renderer;
     vtkNew<vtkRenderWindow> renderWindow;
     renderWindow->AddRenderer(renderer);
-    renderWindow->SetWindowName("LineWidget2");
 
     // renderer->AddActor(actor);
-    renderer->SetBackground(colors->GetColor3d("MidnightBlue").GetData());
+    renderer->SetBackground(colors->GetColor3d("DarkBlue").GetData());
 
     // An interactor
     vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
@@ -93,7 +92,7 @@ int main(int, char *[])
 
     // Cube Actor
     vtkNew<vtkConeSource> cone;
-    cone->SetCenter(0.0, 0.0, 0.0);
+    cone->SetCenter(1.0, 1.0, 1.0);
     cone->SetHeight(5);
     cone->SetRadius(2.5);
     cone->Update();
@@ -111,7 +110,7 @@ int main(int, char *[])
     vtkNew<transformWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
     myWidget->CreateDefaultRepresentation();
-    double bounds[6] = {-1.0, 1.0, -1.0, 1.0, -1.0, 1.0};
+    double bounds[6] = {-2.0, 4.0, -2.0, 4.0, -2.0, 4.0};
     myWidget->GetRepresentation()->PlaceWidget(bounds);
 
     vtkNew<transformCallback> callback;
@@ -120,7 +119,7 @@ int main(int, char *[])
 
     // Add vtkCubeAxesActor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
-    cubeAxesActor->SetBounds(-10.0, 10.0, -10.0, 10.0, -10.0, 10.0);
+    cubeAxesActor->SetBounds(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
     cubeAxesActor->SetCamera(renderer->GetActiveCamera());
     renderer->AddActor(cubeAxesActor);
 
