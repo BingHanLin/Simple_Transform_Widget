@@ -78,5 +78,6 @@
         "xutility": "cpp"
     },
     "editor.guides.indentation": true,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": true
 }
