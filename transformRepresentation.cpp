@@ -58,10 +58,6 @@ transformRepresentation::transformRepresentation()
             axisRingCircleActors[i]->GetProperty()->SetSpecular(0.5);
             axisRingCircleActors[i]->GetProperty()->SetSpecularPower(30.0);
             axisRingCircleActors[i]->GetProperty()->SetOpacity(1.0);
-            // axisRingCircleActors[i]->GetProperty()->SetLineWidth(10);
-            // axisRingCircleActors[i]
-            // ->GetProperty()
-            // ->SetRepresentationToWireframe();
             axisRingCircleActors[i]->GetProperty()->SetColor(
                 axisNormalColor_[i][0], axisNormalColor_[i][1],
                 axisNormalColor_[i][2]);

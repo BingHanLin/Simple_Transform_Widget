@@ -16,12 +16,6 @@ class transformWidget : public vtkAbstractWidget
 
     void SetEnabled(int enabling) override;
 
-    void SetRepresentation(movableAxesRepresentation *r)
-    {
-        this->Superclass::SetWidgetRepresentation(
-            reinterpret_cast<vtkWidgetRepresentation *>(r));
-    }
-
     void CreateDefaultRepresentation() override;
 
    protected:
