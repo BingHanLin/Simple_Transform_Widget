@@ -11,7 +11,7 @@ class transformWidget : public vtkAbstractWidget
    public:
     static transformWidget *New();
 
-    vtkTypeMacro(transformWidget, transformWidget);
+    vtkTypeMacro(transformWidget, vtkAbstractWidget);
     void PrintSelf(ostream &os, vtkIndent indent) override;
 
     void SetEnabled(int enabling) override;
