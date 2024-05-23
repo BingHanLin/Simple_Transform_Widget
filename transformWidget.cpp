@@ -10,7 +10,7 @@
 #include <vtkWidgetCallbackMapper.h>
 #include <vtkWidgetEvent.h>
 
-#include "transformRepresentation.hpp"
+#include "simpleTransformRepresentation.hpp"
 #include "transformWidget.hpp"
 
 vtkStandardNewMacro(transformWidget);
@@ -49,12 +49,11 @@ void transformWidget::SetEnabled(int enabling)
 {
     const int enabled = this->Enabled;
 
-
     if (enabling && !enabled)
     {
         // We do this step first because it sets the CurrentRenderer
         vtkAbstractWidget::SetEnabled(enabling);
-		
+
         this->CreateDefaultRepresentation();
 
         if (this->Parent)
@@ -126,7 +125,7 @@ void transformWidget::SetEnabled(int enabling)
                 }
             }
         }
-		
+
         // We do this step last because the CurrentRenderer is still useful
         vtkAbstractWidget::SetEnabled(enabling);
     }
@@ -138,7 +137,7 @@ void transformWidget::CreateDefaultRepresentation()
 {
     if (!this->WidgetRep)
     {
-        this->WidgetRep = transformRepresentation::New();
+        this->WidgetRep = simpleTransformRepresentation::New();
     }
 }
 
@@ -150,8 +149,7 @@ void transformWidget::PrintSelf(ostream &os, vtkIndent indent)
 void transformWidget::SelectAction(vtkAbstractWidget *w)
 {
     auto self = reinterpret_cast<transformWidget *>(w);
-    if (self->WidgetRep->GetInteractionState() ==
-        transformRepresentation::INTERACTIONSTATE::outside)
+    if (self->WidgetRep->GetInteractionState() == INTERACTIONSTATE::outside)
     {
         return;
     }
@@ -211,7 +209,7 @@ void transformWidget::MoveAction(vtkAbstractWidget *w)
         int cursorChanged = 0;
 
         {
-            if (currState == transformRepresentation::INTERACTIONSTATE::outside)
+            if (currState == INTERACTIONSTATE::outside)
             {
                 cursorChanged = self->RequestCursorShape(VTK_CURSOR_DEFAULT);
             }

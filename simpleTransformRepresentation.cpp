@@ -17,16 +17,16 @@
 #include <vtkTransform.h>
 #include <vtkWindow.h>
 
-#include "transformRepresentation.hpp"
+#include "simpleTransformRepresentation.hpp"
 
-vtkStandardNewMacro(transformRepresentation);
+vtkStandardNewMacro(simpleTransformRepresentation);
 
 const static double DEFAULT_SIZE = 1.0;
 const static double RING_RADIUS = 0.5;
 const static double RING_CROSS_SECTION_RADIUS = 0.025;
 const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
 
-transformRepresentation::transformRepresentation()
+simpleTransformRepresentation::simpleTransformRepresentation()
 {
     const std::array<std::array<double, 3>, 3> lineDirection = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
@@ -328,11 +328,11 @@ transformRepresentation::transformRepresentation()
     this->PlaceWidget(bounds);
 }
 
-transformRepresentation::~transformRepresentation()
+simpleTransformRepresentation::~simpleTransformRepresentation()
 {
 }
 
-void transformRepresentation::StartWidgetInteraction(double e[2])
+void simpleTransformRepresentation::StartWidgetInteraction(double e[2])
 {
     auto path = this->GetAssemblyPath(e[0], e[1], 0., picker_);
     if (path != nullptr)
@@ -341,12 +341,9 @@ void transformRepresentation::StartWidgetInteraction(double e[2])
     }
 
     prevEventPosition_ = {e[0], e[1], 0.0};
-
-    this->ComputeInteractionState(static_cast<int>(e[0]),
-                                  static_cast<int>(e[1]), 0);
 }
 
-void transformRepresentation::WidgetInteraction(double e[2])
+void simpleTransformRepresentation::WidgetInteraction(double e[2])
 {
     // refer to vtkBoxWidget.cxx
     double focalPoint[4];
@@ -369,7 +366,7 @@ void transformRepresentation::WidgetInteraction(double e[2])
     this->Modified();
 }
 
-void transformRepresentation::PlaceWidget(double bounds[6])
+void simpleTransformRepresentation::PlaceWidget(double bounds[6])
 {
     // bounds[6]: xmin, xmax, ymin, ymax, zmin
     const std::array<double, 3> minPoint = {bounds[0], bounds[2], bounds[4]};
@@ -401,8 +398,8 @@ void transformRepresentation::PlaceWidget(double bounds[6])
     assembleActor_->SetUserTransform(trans);
 }
 
-int transformRepresentation::ComputeInteractionState(int x, int y,
-                                                     int vtkNotUsed(modify))
+int simpleTransformRepresentation::ComputeInteractionState(
+    int x, int y, int vtkNotUsed(modify))
 {
     if (!this->Renderer || !this->Renderer->IsInViewport(x, y))
     {
@@ -455,7 +452,7 @@ int transformRepresentation::ComputeInteractionState(int x, int y,
     return this->InteractionState;
 }
 
-void transformRepresentation::GetTransform(vtkTransform *t)
+void simpleTransformRepresentation::GetTransform(vtkTransform *t)
 {
     t->Identity();
     t->PostMultiply();
@@ -466,7 +463,7 @@ void transformRepresentation::GetTransform(vtkTransform *t)
     t->Concatenate(assembleActor_->GetUserMatrix());
 }
 
-void transformRepresentation::Highlight(int highlight)
+void simpleTransformRepresentation::Highlight(int highlight)
 {
     vtkNew<vtkPropCollection> propsCollection;
     assembleActor_->GetActors(propsCollection);
@@ -535,7 +532,7 @@ void transformRepresentation::Highlight(int highlight)
     }
 }
 
-void transformRepresentation::BuildRepresentation()
+void simpleTransformRepresentation::BuildRepresentation()
 {
     if (this->GetMTime() > this->BuildTime ||
         (this->Renderer && this->Renderer->GetVTKWindow() &&
@@ -826,7 +823,7 @@ void transformRepresentation::BuildRepresentation()
     }
 }
 
-void transformRepresentation::GetActors(vtkPropCollection *pc)
+void simpleTransformRepresentation::GetActors(vtkPropCollection *pc)
 {
     pc->AddItem(assembleActor_);
 }
