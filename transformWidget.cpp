@@ -49,11 +49,12 @@ void transformWidget::SetEnabled(int enabling)
 {
     const int enabled = this->Enabled;
 
-    // We do this step first because it sets the CurrentRenderer
-    vtkAbstractWidget::SetEnabled(enabling);
 
     if (enabling && !enabled)
     {
+        // We do this step first because it sets the CurrentRenderer
+        vtkAbstractWidget::SetEnabled(enabling);
+		
         this->CreateDefaultRepresentation();
 
         if (this->Parent)
@@ -125,6 +126,9 @@ void transformWidget::SetEnabled(int enabling)
                 }
             }
         }
+		
+        // We do this step last because the CurrentRenderer is still useful
+        vtkAbstractWidget::SetEnabled(enabling);
     }
 
     this->Interactor->Render();
