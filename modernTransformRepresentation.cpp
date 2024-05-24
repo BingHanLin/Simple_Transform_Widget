@@ -7,24 +7,21 @@
 #include <vtkConeSource.h>
 #include <vtkCylinderSource.h>
 #include <vtkInteractorObserver.h>
+#include <vtkNamedColors.h>
 #include <vtkObjectFactory.h>
 #include <vtkParametricFunctionSource.h>
 #include <vtkParametricTorus.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPolyLine.h>
 #include <vtkPolygon.h>
 #include <vtkProperty.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkTransform.h>
+#include <vtkTriangleFilter.h>
 #include <vtkWindow.h>
 
 #include "modernTransformRepresentation.hpp"
-
-const static double DEFAULT_SIZE = 1.0;
-const static double RING_RADIUS = 0.5;
-const static double RING_CROSS_SECTION_RADIUS = 0.025;
-const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
-const static int NUMBER_OF_ARROW_POINTS = 7;
 
 enum class ARROWDIRECTION
 {
@@ -33,7 +30,20 @@ enum class ARROWDIRECTION
     Z = 2
 };
 
-vtkSmartPointer<vtkActor> generateArrowActor(const ARROWDIRECTION &direction)
+const static double DEFAULT_SIZE = 1.0;
+const static double RING_RADIUS = 0.5;
+const static double RING_CROSS_SECTION_RADIUS = 0.025;
+const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
+const static int NUMBER_OF_ARROW_POINTS = 7;
+
+const static std::array<double, NUMBER_OF_ARROW_POINTS> arrowShapeHOffsets{
+    -0.1, -0.1, -0.2, 0.0, 0.2, 0.1, 0.1};
+
+const static std::array<double, NUMBER_OF_ARROW_POINTS> arrowShapeVOffsets{
+    0.5, 0.75, 0.75, 1.0, 0.75, 0.75, 0.5};
+
+vtkSmartPointer<vtkActor> generateArrowShapeActor(
+    const ARROWDIRECTION &direction)
 {
     /**
     Shape of the arrow:
@@ -45,13 +55,7 @@ vtkSmartPointer<vtkActor> generateArrowActor(const ARROWDIRECTION &direction)
        |__|
     **/
 
-    const std::array<double, NUMBER_OF_ARROW_POINTS> arrowShapeVOffsets{
-        0.0, 0.5, 0.5, 1.0, 0.5, 0.5, 0.0};
-
-    const std::array<double, NUMBER_OF_ARROW_POINTS> arrowShapeHOffsets{
-        -0.25, -0.25, -0.5, 0.0, 0.5, 0.25, 0.25};
-
-    // Step 1: create the points for the arrow
+    // Step 1: Create the points for the arrow
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
     points->SetNumberOfPoints(NUMBER_OF_ARROW_POINTS);
     for (int i = 0; i < NUMBER_OF_ARROW_POINTS; i++)
@@ -73,7 +77,7 @@ vtkSmartPointer<vtkActor> generateArrowActor(const ARROWDIRECTION &direction)
         }
     }
 
-    // Step 2: create the polygon for the arrow
+    // Step 2: Create the polygon for the arrow
     vtkSmartPointer<vtkPolygon> polygon = vtkSmartPointer<vtkPolygon>::New();
     polygon->GetPointIds()->SetNumberOfIds(NUMBER_OF_ARROW_POINTS);
     for (int i = 0; i < NUMBER_OF_ARROW_POINTS; i++)
@@ -82,22 +86,112 @@ vtkSmartPointer<vtkActor> generateArrowActor(const ARROWDIRECTION &direction)
     }
 
     // Step 3: Create a cell array to store the polygon
-    vtkSmartPointer<vtkCellArray> polygons =
+    vtkSmartPointer<vtkCellArray> polygonCell =
         vtkSmartPointer<vtkCellArray>::New();
-    polygons->InsertNextCell(polygon);
+    polygonCell->InsertNextCell(polygon);
 
     // Step 4: Create a polydata to store the points and the polygon
     vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
     polyData->SetPoints(points);
-    polyData->SetPolys(polygons);
+    polyData->SetPolys(polygonCell);
 
-    // Step 5: Create a mapper and actor
+    // Step 5: Convert input polygonCell and strips to triangles
+    vtkSmartPointer<vtkTriangleFilter> geometryFilter =
+        vtkSmartPointer<vtkTriangleFilter>::New();
+    geometryFilter->SetInputData(polyData);
+    geometryFilter->Update();
+
+    // Step 6: Create a mapper and actor
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(geometryFilter->GetOutput());
+
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+
+    return actor;
+}
+
+vtkSmartPointer<vtkActor> generateArrowOutlineActor(
+    const ARROWDIRECTION &direction)
+{
+    /**
+    Shape of the arrow:
+        /\
+       /  \
+      /    \
+     /_    _\
+       |  |
+       |__|
+    **/
+
+    // Step 1: Create the points for the arrow
+    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+    points->SetNumberOfPoints(NUMBER_OF_ARROW_POINTS + 1);
+    for (int i = 0; i < NUMBER_OF_ARROW_POINTS; i++)
+    {
+        if (direction == ARROWDIRECTION::X)
+        {
+            points->SetPoint(i, arrowShapeVOffsets[i], arrowShapeHOffsets[i],
+                             0.0);
+        }
+        else if (direction == ARROWDIRECTION::Y)
+        {
+            points->SetPoint(i, arrowShapeHOffsets[i], arrowShapeVOffsets[i],
+                             0.0);
+        }
+        else
+        {
+            points->SetPoint(i, arrowShapeHOffsets[i], 0.0,
+                             arrowShapeVOffsets[i]);
+        }
+    }
+
+    if (direction == ARROWDIRECTION::X)
+    {
+        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeVOffsets[0],
+                         arrowShapeHOffsets[0], 0.0);
+    }
+    else if (direction == ARROWDIRECTION::Y)
+    {
+        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeHOffsets[0],
+                         arrowShapeVOffsets[0], 0.0);
+    }
+    else
+    {
+        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeHOffsets[0], 0.0,
+                         arrowShapeVOffsets[0]);
+    }
+
+    // Step 2: Create the polygon for the arrow
+    vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
+    polyLine->GetPointIds()->SetNumberOfIds(NUMBER_OF_ARROW_POINTS);
+    for (int i = 0; i < NUMBER_OF_ARROW_POINTS; i++)
+    {
+        polyLine->GetPointIds()->SetId(i, i);
+    }
+
+    // Step 3: Create a cell array to store the polygon
+    vtkSmartPointer<vtkCellArray> polygonCell =
+        vtkSmartPointer<vtkCellArray>::New();
+    polygonCell->InsertNextCell(polyLine);
+
+    // Step 4: Create a polydata to store the points and the polygon
+    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetLines(polygonCell);
+
+    // Step 6: Create a mapper and actor
     vtkSmartPointer<vtkPolyDataMapper> mapper =
         vtkSmartPointer<vtkPolyDataMapper>::New();
     mapper->SetInputData(polyData);
 
+    vtkNew<vtkNamedColors> colors;
+
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(colors->GetColor3d("Tomato").GetData());
+    actor->GetProperty()->SetLineWidth(3.0);
 
     return actor;
 }
@@ -106,12 +200,15 @@ vtkStandardNewMacro(modernTransformRepresentation);
 
 modernTransformRepresentation::modernTransformRepresentation()
 {
-    auto xShapeActor = generateArrowActor(ARROWDIRECTION::X);
-    auto yShapeActor = vtkSmartPointer<vtkActor>::New();
-    auto zShapeActor = vtkSmartPointer<vtkActor>::New();
-
     const std::array<vtkSmartPointer<vtkActor>, 3> arrowShapeActors{
-        xShapeActor, yShapeActor, zShapeActor};
+        generateArrowShapeActor(ARROWDIRECTION::X),
+        generateArrowShapeActor(ARROWDIRECTION::Y),
+        generateArrowShapeActor(ARROWDIRECTION::Z)};
+
+    const std::array<vtkSmartPointer<vtkActor>, 3> arrowOutlineActors{
+        generateArrowOutlineActor(ARROWDIRECTION::X),
+        generateArrowOutlineActor(ARROWDIRECTION::Y),
+        generateArrowOutlineActor(ARROWDIRECTION::Z)};
 
     auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
     {
@@ -159,6 +256,7 @@ modernTransformRepresentation::modernTransformRepresentation()
     {
         translateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
         translateActors_[i]->AddPart(arrowShapeActors[i]);
+        translateActors_[i]->AddPart(arrowOutlineActors[i]);
 
         translateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
 
