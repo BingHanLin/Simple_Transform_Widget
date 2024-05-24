@@ -14,10 +14,11 @@
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
+#include <vtkSmartPointer.h>
 #include <vtkSphereSource.h>
 #include <vtkTransform.h>
 
-#include "transformRepresentation.hpp"
+#include "modernTransformRepresentation.hpp"
 #include "transformWidget.hpp"
 
 // This does the actual work.
@@ -109,7 +110,11 @@ int main(int, char *[])
     // Add transformWidget
     vtkNew<transformWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
-    myWidget->CreateDefaultRepresentation();
+
+    vtkNew<modernTransformRepresentation> rep;
+    myWidget->SetRepresentation(rep);
+    // myWidget->CreateDefaultRepresentation();
+
     double bounds[6] = {-2.0, 4.0, -2.0, 4.0, -2.0, 4.0};
     myWidget->GetRepresentation()->PlaceWidget(bounds);
 

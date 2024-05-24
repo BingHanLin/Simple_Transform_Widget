@@ -18,7 +18,8 @@ find_package(VTK REQUIRED)
 
 add_executable(${PROJECT_NAME}  
   ${PROJECT_SOURCE_DIR}/main.cpp
-  ${PROJECT_SOURCE_DIR}/transformRepresentation.cpp
+  ${PROJECT_SOURCE_DIR}/simpleTransformRepresentation.cpp
+  ${PROJECT_SOURCE_DIR}/modernTransformRepresentation.cpp
   ${PROJECT_SOURCE_DIR}/transformWidget.cpp
 )
 

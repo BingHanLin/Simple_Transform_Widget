@@ -141,6 +141,16 @@ void transformWidget::CreateDefaultRepresentation()
     }
 }
 
+void transformWidget::SetRepresentation(transformRepresentation *rep)
+{
+    if (rep == nullptr || this->WidgetRep == rep)
+    {
+        return;
+    }
+
+    this->WidgetRep = rep;
+}
+
 void transformWidget::PrintSelf(ostream &os, vtkIndent indent)
 {
     vtkAbstractWidget::PrintSelf(os, indent);
