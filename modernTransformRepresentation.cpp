@@ -1,3 +1,4 @@
+#include <vector>
 #include <vtkActor.h>
 #include <vtkAssembly.h>
 #include <vtkAssemblyPath.h>
@@ -48,170 +49,28 @@ const static double RING_CROSS_SECTION_RADIUS = 0.025;
 const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
 const static int NUMBER_OF_ARROW_POINTS = 7;
 
-const static std::array<double, NUMBER_OF_ARROW_POINTS> arrowShapeHOffsets{
-    -0.1, -0.1, -0.2, 0.0, 0.2, 0.1, 0.1};
+/**
+Shape of the arrow:
+    /\
+   /  \
+  /    \
+ /_    _\
+   |  |
+   |__|
+**/
 
-const static std::array<double, NUMBER_OF_ARROW_POINTS> arrowShapeVOffsets{
-    0.5, 0.75, 0.75, 1.0, 0.75, 0.75, 0.5};
+const static std::vector<double> ARROW_HORIZONTAL_OFFSETS{-0.1, -0.1, -0.2, 0.0,
+                                                          0.2,  0.1,  0.1};
 
-vtkSmartPointer<vtkActor> generateArrowShapeActor(
-    const ARROWDIRECTION &direction)
+const static std::vector<double> ARROW_VERTICAL_OFFSETS{0.5,  0.75, 0.75, 1.0,
+                                                        0.75, 0.75, 0.5};
+
+void getRotateArrowPoints(std::vector<double> &horizontalOffsets,
+                          std::vector<double> &verticalOffsets)
 {
-    /**
-    Shape of the arrow:
-        /\
-       /  \
-      /    \
-     /_    _\
-       |  |
-       |__|
-    **/
+    horizontalOffsets.resize(NUMBER_OF_ROTATE_ARROW_POINTS);
+    verticalOffsets.resize(NUMBER_OF_ROTATE_ARROW_POINTS);
 
-    // Step 1: Create the points for the arrow
-    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    points->SetNumberOfPoints(NUMBER_OF_ARROW_POINTS);
-    for (int i = 0; i < points->GetNumberOfPoints(); i++)
-    {
-        if (direction == ARROWDIRECTION::X)
-        {
-            points->SetPoint(i, arrowShapeVOffsets[i], arrowShapeHOffsets[i],
-                             0.0);
-        }
-        else if (direction == ARROWDIRECTION::Y)
-        {
-            points->SetPoint(i, 0.0, arrowShapeVOffsets[i],
-                             arrowShapeHOffsets[i]);
-        }
-        else
-        {
-            points->SetPoint(i, arrowShapeHOffsets[i], 0.0,
-                             arrowShapeVOffsets[i]);
-        }
-    }
-
-    // Step 2: Create the polygon for the arrow
-    vtkSmartPointer<vtkPolygon> polygon = vtkSmartPointer<vtkPolygon>::New();
-    polygon->GetPointIds()->SetNumberOfIds(NUMBER_OF_ARROW_POINTS);
-    for (int i = 0; i < polygon->GetNumberOfPoints(); i++)
-    {
-        polygon->GetPointIds()->SetId(i, i);
-    }
-
-    // Step 3: Create a cell array to store the polygon
-    vtkSmartPointer<vtkCellArray> polygonCell =
-        vtkSmartPointer<vtkCellArray>::New();
-    polygonCell->InsertNextCell(polygon);
-
-    // Step 4: Create a polydata to store the points and the polygon
-    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
-    polyData->SetPoints(points);
-    polyData->SetPolys(polygonCell);
-
-    // Step 5: Convert input polygonCell and strips to triangles
-    vtkSmartPointer<vtkTriangleFilter> geometryFilter =
-        vtkSmartPointer<vtkTriangleFilter>::New();
-    geometryFilter->SetInputData(polyData);
-    geometryFilter->Update();
-
-    // Step 6: Create a mapper and actor
-    vtkSmartPointer<vtkPolyDataMapper> mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputData(geometryFilter->GetOutput());
-
-    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-
-    return actor;
-}
-
-vtkSmartPointer<vtkActor> generateArrowOutlineActor(
-    const ARROWDIRECTION &direction)
-{
-    /**
-    Shape of the arrow:
-        /\
-       /  \
-      /    \
-     /_    _\
-       |  |
-       |__|
-    **/
-
-    // Step 1: Create the points for the arrow
-    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    points->SetNumberOfPoints(NUMBER_OF_ARROW_POINTS + 1);
-    for (int i = 0; i < NUMBER_OF_ARROW_POINTS; i++)
-    {
-        if (direction == ARROWDIRECTION::X)
-        {
-            points->SetPoint(i, arrowShapeVOffsets[i], arrowShapeHOffsets[i],
-                             0.0);
-        }
-        else if (direction == ARROWDIRECTION::Y)
-        {
-            points->SetPoint(i, 0.0, arrowShapeVOffsets[i],
-                             arrowShapeHOffsets[i]);
-        }
-        else
-        {
-            points->SetPoint(i, arrowShapeHOffsets[i], 0.0,
-                             arrowShapeVOffsets[i]);
-        }
-    }
-
-    if (direction == ARROWDIRECTION::X)
-    {
-        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeVOffsets[0],
-                         arrowShapeHOffsets[0], 0.0);
-    }
-    else if (direction == ARROWDIRECTION::Y)
-    {
-        points->SetPoint(NUMBER_OF_ARROW_POINTS, 0.0, arrowShapeVOffsets[0],
-                         arrowShapeHOffsets[0]);
-    }
-    else
-    {
-        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeHOffsets[0], 0.0,
-                         arrowShapeVOffsets[0]);
-    }
-
-    // Step 2: Create the polygon for the arrow
-    vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
-    polyLine->GetPointIds()->SetNumberOfIds(NUMBER_OF_ARROW_POINTS);
-    for (int i = 0; i < polyLine->GetNumberOfPoints(); i++)
-    {
-        polyLine->GetPointIds()->SetId(i, i);
-    }
-
-    // Step 3: Create a cell array to store the polygon
-    vtkSmartPointer<vtkCellArray> polygonCell =
-        vtkSmartPointer<vtkCellArray>::New();
-    polygonCell->InsertNextCell(polyLine);
-
-    // Step 4: Create a polydata to store the points and the polygon
-    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
-    polyData->SetPoints(points);
-    polyData->SetLines(polygonCell);
-
-    // Step 6: Create a mapper and actor
-    vtkSmartPointer<vtkPolyDataMapper> mapper =
-        vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputData(polyData);
-
-    vtkNew<vtkNamedColors> colors;
-
-    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-    actor->GetProperty()->SetColor(colors->GetColor3d("Tomato").GetData());
-    actor->GetProperty()->SetLineWidth(3.0);
-
-    return actor;
-}
-
-void getRotateArrowPoints(
-    std::array<double, NUMBER_OF_ROTATE_ARROW_POINTS> &arrowShapeHOffsets,
-    std::array<double, NUMBER_OF_ROTATE_ARROW_POINTS> &arrowShapeVOffsets)
-{
     const auto headRadians = ARROW_HEAD_LENGTH / ROTATE_ARROW_RADIUS;
 
     const double resolutionAngle =
@@ -225,8 +84,8 @@ void getRotateArrowPoints(
             vtkMath::RadiansFromDegrees(ROTATE_ARROW_LEFT_ANGLE) + headRadians;
         const double h = std::cos(angleRadians) * ROTATE_ARROW_RADIUS;
         const double v = std::sin(angleRadians) * ROTATE_ARROW_RADIUS;
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -238,8 +97,8 @@ void getRotateArrowPoints(
         const double v = std::sin(angleRadians) *
                          (ROTATE_ARROW_RADIUS + ARROW_HEAD_WIDTH * 0.5);
 
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -252,8 +111,8 @@ void getRotateArrowPoints(
         const double v = std::sin(angleRadians) *
                          (ROTATE_ARROW_RADIUS + ARROW_SHAFT_WIDTH * 0.5);
 
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -265,8 +124,8 @@ void getRotateArrowPoints(
         const double v = std::sin(angleRadians) *
                          (ROTATE_ARROW_RADIUS + ARROW_HEAD_WIDTH * 0.5);
 
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -275,8 +134,8 @@ void getRotateArrowPoints(
             vtkMath::RadiansFromDegrees(ROTATE_ARROW_RIGHT_ANGLE) - headRadians;
         const double h = std::cos(angleRadians) * ROTATE_ARROW_RADIUS;
         const double v = std::sin(angleRadians) * ROTATE_ARROW_RADIUS;
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -288,8 +147,8 @@ void getRotateArrowPoints(
         const double v = std::sin(angleRadians) *
                          (ROTATE_ARROW_RADIUS - ARROW_HEAD_WIDTH * 0.5);
 
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -302,8 +161,8 @@ void getRotateArrowPoints(
         const double v = std::sin(angleRadians) *
                          (ROTATE_ARROW_RADIUS - ARROW_SHAFT_WIDTH * 0.5);
 
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
         indexCounter++;
     }
 
@@ -315,47 +174,42 @@ void getRotateArrowPoints(
         const double v = std::sin(angleRadians) *
                          (ROTATE_ARROW_RADIUS - ARROW_HEAD_WIDTH * 0.5);
 
-        arrowShapeHOffsets[indexCounter] = h;
-        arrowShapeVOffsets[indexCounter] = v;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
     }
 }
 
-vtkSmartPointer<vtkActor> generateRotateArrowShapeActor(
-    const ARROWDIRECTION &direction)
+vtkSmartPointer<vtkActor> getShapeActor(
+    const std::vector<double> &horizontalOffsets,
+    const std::vector<double> &verticalOffsets, const ARROWDIRECTION &direction)
 {
-    /**
-    Shape of the arrow:
-    **/
-
-    std::array<double, NUMBER_OF_ROTATE_ARROW_POINTS> arrowShapeHOffsets;
-    std::array<double, NUMBER_OF_ROTATE_ARROW_POINTS> arrowShapeVOffsets;
-    getRotateArrowPoints(arrowShapeHOffsets, arrowShapeVOffsets);
+    if (horizontalOffsets.size() != verticalOffsets.size())
+    {
+        return nullptr;
+    }
 
     // Step 1: Create the points for the arrow
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    points->SetNumberOfPoints(NUMBER_OF_ROTATE_ARROW_POINTS);
+    points->SetNumberOfPoints(horizontalOffsets.size());
     for (int i = 0; i < points->GetNumberOfPoints(); i++)
     {
         if (direction == ARROWDIRECTION::X)
         {
-            points->SetPoint(i, arrowShapeVOffsets[i], arrowShapeHOffsets[i],
-                             0.0);
+            points->SetPoint(i, verticalOffsets[i], horizontalOffsets[i], 0.0);
         }
         else if (direction == ARROWDIRECTION::Y)
         {
-            points->SetPoint(i, 0.0, arrowShapeVOffsets[i],
-                             arrowShapeHOffsets[i]);
+            points->SetPoint(i, 0.0, verticalOffsets[i], horizontalOffsets[i]);
         }
         else
         {
-            points->SetPoint(i, arrowShapeHOffsets[i], 0.0,
-                             arrowShapeVOffsets[i]);
+            points->SetPoint(i, horizontalOffsets[i], 0.0, verticalOffsets[i]);
         }
     }
 
     // Step 2: Create the polygon for the arrow
     vtkSmartPointer<vtkPolygon> polygon = vtkSmartPointer<vtkPolygon>::New();
-    polygon->GetPointIds()->SetNumberOfIds(NUMBER_OF_ROTATE_ARROW_POINTS);
+    polygon->GetPointIds()->SetNumberOfIds(points->GetNumberOfPoints());
     for (int i = 0; i < polygon->GetNumberOfPoints(); i++)
     {
         polygon->GetPointIds()->SetId(i, i);
@@ -388,58 +242,53 @@ vtkSmartPointer<vtkActor> generateRotateArrowShapeActor(
     return actor;
 }
 
-vtkSmartPointer<vtkActor> generateRotateArrowOutlineActor(
-    const ARROWDIRECTION &direction)
+vtkSmartPointer<vtkActor> getOutlineActor(
+    const std::vector<double> &horizontalOffsets,
+    const std::vector<double> &verticalOffsets, const ARROWDIRECTION &direction)
 {
-    /**
-    Shape of the arrow:
-    **/
-
-    std::array<double, NUMBER_OF_ROTATE_ARROW_POINTS> arrowShapeHOffsets;
-    std::array<double, NUMBER_OF_ROTATE_ARROW_POINTS> arrowShapeVOffsets;
-    getRotateArrowPoints(arrowShapeHOffsets, arrowShapeVOffsets);
+    if (horizontalOffsets.size() != verticalOffsets.size())
+    {
+        return nullptr;
+    }
 
     // Step 1: Create the points for the arrow
     vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    points->SetNumberOfPoints(NUMBER_OF_ROTATE_ARROW_POINTS + 1);
-    for (int i = 0; i < NUMBER_OF_ROTATE_ARROW_POINTS; i++)
+    points->SetNumberOfPoints(horizontalOffsets.size() + 1);
+    for (int i = 0; i < points->GetNumberOfPoints() - 1; i++)
     {
         if (direction == ARROWDIRECTION::X)
         {
-            points->SetPoint(i, arrowShapeVOffsets[i], arrowShapeHOffsets[i],
-                             0.0);
+            points->SetPoint(i, verticalOffsets[i], horizontalOffsets[i], 0.0);
         }
         else if (direction == ARROWDIRECTION::Y)
         {
-            points->SetPoint(i, 0.0, arrowShapeVOffsets[i],
-                             arrowShapeHOffsets[i]);
+            points->SetPoint(i, 0.0, verticalOffsets[i], horizontalOffsets[i]);
         }
         else
         {
-            points->SetPoint(i, arrowShapeHOffsets[i], 0.0,
-                             arrowShapeVOffsets[i]);
+            points->SetPoint(i, horizontalOffsets[i], 0.0, verticalOffsets[i]);
         }
     }
 
     if (direction == ARROWDIRECTION::X)
     {
-        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeVOffsets[0],
-                         arrowShapeHOffsets[0], 0.0);
+        points->SetPoint(points->GetNumberOfPoints() - 1, verticalOffsets[0],
+                         horizontalOffsets[0], 0.0);
     }
     else if (direction == ARROWDIRECTION::Y)
     {
-        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeHOffsets[0],
-                         arrowShapeVOffsets[0], 0.0);
+        points->SetPoint(points->GetNumberOfPoints() - 1, 0.0,
+                         verticalOffsets[0], horizontalOffsets[0]);
     }
     else
     {
-        points->SetPoint(NUMBER_OF_ARROW_POINTS, arrowShapeHOffsets[0], 0.0,
-                         arrowShapeVOffsets[0]);
+        points->SetPoint(points->GetNumberOfPoints() - 1, horizontalOffsets[0],
+                         0.0, verticalOffsets[0]);
     }
 
     // Step 2: Create the polygon for the arrow
     vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
-    polyLine->GetPointIds()->SetNumberOfIds(NUMBER_OF_ROTATE_ARROW_POINTS);
+    polyLine->GetPointIds()->SetNumberOfIds(points->GetNumberOfPoints());
     for (int i = 0; i < polyLine->GetNumberOfPoints(); i++)
     {
         polyLine->GetPointIds()->SetId(i, i);
@@ -470,19 +319,53 @@ vtkSmartPointer<vtkActor> generateRotateArrowOutlineActor(
     return actor;
 }
 
+vtkSmartPointer<vtkActor> getTranslateArrowShapeActor(
+    const ARROWDIRECTION &direction)
+{
+    return getShapeActor(ARROW_HORIZONTAL_OFFSETS, ARROW_VERTICAL_OFFSETS,
+                         direction);
+}
+
+vtkSmartPointer<vtkActor> getTranslateArrowOutlineActor(
+    const ARROWDIRECTION &direction)
+{
+    return getOutlineActor(ARROW_HORIZONTAL_OFFSETS, ARROW_VERTICAL_OFFSETS,
+                           direction);
+}
+
+vtkSmartPointer<vtkActor> getRotateArrowShapeActor(
+    const ARROWDIRECTION &direction)
+{
+    std::vector<double> horizontalOffsets;
+    std::vector<double> verticalOffsets;
+    getRotateArrowPoints(horizontalOffsets, verticalOffsets);
+
+    return getShapeActor(horizontalOffsets, verticalOffsets, direction);
+}
+
+vtkSmartPointer<vtkActor> getRotateArrowOutlineActor(
+    const ARROWDIRECTION &direction)
+{
+    std::vector<double> horizontalOffsets;
+    std::vector<double> verticalOffsets;
+    getRotateArrowPoints(horizontalOffsets, verticalOffsets);
+
+    return getOutlineActor(horizontalOffsets, verticalOffsets, direction);
+}
+
 vtkStandardNewMacro(modernTransformRepresentation);
 
 modernTransformRepresentation::modernTransformRepresentation()
 {
     const std::array<vtkSmartPointer<vtkActor>, 3> arrowShapeActors{
-        generateArrowShapeActor(ARROWDIRECTION::X),
-        generateArrowShapeActor(ARROWDIRECTION::Y),
-        generateArrowShapeActor(ARROWDIRECTION::Z)};
+        getTranslateArrowShapeActor(ARROWDIRECTION::X),
+        getTranslateArrowShapeActor(ARROWDIRECTION::Y),
+        getTranslateArrowShapeActor(ARROWDIRECTION::Z)};
 
     const std::array<vtkSmartPointer<vtkActor>, 3> arrowOutlineActors{
-        generateArrowOutlineActor(ARROWDIRECTION::X),
-        generateArrowOutlineActor(ARROWDIRECTION::Y),
-        generateArrowOutlineActor(ARROWDIRECTION::Z)};
+        getTranslateArrowOutlineActor(ARROWDIRECTION::X),
+        getTranslateArrowOutlineActor(ARROWDIRECTION::Y),
+        getTranslateArrowOutlineActor(ARROWDIRECTION::Z)};
 
     auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
     {
@@ -513,14 +396,14 @@ modernTransformRepresentation::modernTransformRepresentation()
     }
 
     const std::array<vtkSmartPointer<vtkActor>, 3> rotateArrowShapeActors{
-        generateRotateArrowShapeActor(ARROWDIRECTION::X),
-        generateRotateArrowShapeActor(ARROWDIRECTION::Y),
-        generateRotateArrowShapeActor(ARROWDIRECTION::Z)};
+        getRotateArrowShapeActor(ARROWDIRECTION::X),
+        getRotateArrowShapeActor(ARROWDIRECTION::Y),
+        getRotateArrowShapeActor(ARROWDIRECTION::Z)};
 
     const std::array<vtkSmartPointer<vtkActor>, 3> rotateArrowOutlineActors{
-        generateRotateArrowOutlineActor(ARROWDIRECTION::X),
-        generateRotateArrowOutlineActor(ARROWDIRECTION::Y),
-        generateRotateArrowOutlineActor(ARROWDIRECTION::Z)};
+        getRotateArrowOutlineActor(ARROWDIRECTION::X),
+        getRotateArrowOutlineActor(ARROWDIRECTION::Y),
+        getRotateArrowOutlineActor(ARROWDIRECTION::Z)};
 
     for (auto i = 0; i < 3; i++)
     {
