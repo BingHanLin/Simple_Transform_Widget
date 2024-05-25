@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 
+#include <vtkActor.h>
 #include <vtkMatrix4x4.h>
 #include <vtkSmartPointer.h>
 #include <vtkWidgetRepresentation.h>
@@ -29,12 +30,15 @@ class modernTransformRepresentation : public transformRepresentation
 
    protected:
     modernTransformRepresentation();
-    ~modernTransformRepresentation() override;
 
    private:
     const std::array<std::array<double, 3>, 3> axisNormalColor_ = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
 
+    std::array<vtkSmartPointer<vtkActor>, 3> rotateShapeActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> rotateOutlineActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> translateShapeActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> translateOutlineActors_;
     std::array<vtkSmartPointer<vtkAssembly>, 3> rotateActors_;
     std::array<vtkSmartPointer<vtkAssembly>, 3> translateActors_;
     vtkSmartPointer<vtkAssembly> scaleActor_;

@@ -328,10 +328,6 @@ simpleTransformRepresentation::simpleTransformRepresentation()
     this->PlaceWidget(bounds);
 }
 
-simpleTransformRepresentation::~simpleTransformRepresentation()
-{
-}
-
 void simpleTransformRepresentation::StartWidgetInteraction(double e[2])
 {
     auto path = this->GetAssemblyPath(e[0], e[1], 0., picker_);

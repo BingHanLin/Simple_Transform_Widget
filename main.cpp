@@ -19,6 +19,7 @@
 #include <vtkTransform.h>
 
 #include "modernTransformRepresentation.hpp"
+#include "simpleTransformRepresentation.hpp"
 #include "transformWidget.hpp"
 
 // This does the actual work.
@@ -113,7 +114,6 @@ int main(int, char *[])
 
     vtkNew<modernTransformRepresentation> rep;
     myWidget->SetRepresentation(rep);
-    // myWidget->CreateDefaultRepresentation();
 
     double bounds[6] = {-2.0, 4.0, -2.0, 4.0, -2.0, 4.0};
     myWidget->GetRepresentation()->PlaceWidget(bounds);

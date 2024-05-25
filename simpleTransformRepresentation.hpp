@@ -29,7 +29,6 @@ class simpleTransformRepresentation : public transformRepresentation
 
    protected:
     simpleTransformRepresentation();
-    ~simpleTransformRepresentation() override;
 
    private:
     const std::array<std::array<double, 3>, 3> axisNormalColor_ = {

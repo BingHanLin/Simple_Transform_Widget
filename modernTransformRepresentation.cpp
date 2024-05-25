@@ -24,6 +24,8 @@
 
 #include "modernTransformRepresentation.hpp"
 
+vtkStandardNewMacro(modernTransformRepresentation);
+
 enum class ARROWDIRECTION
 {
     X = 0,
@@ -239,6 +241,9 @@ vtkSmartPointer<vtkActor> getShapeActor(
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
 
+    vtkNew<vtkNamedColors> colors;
+    actor->GetProperty()->SetColor(colors->GetColor3d("White").GetData());
+
     return actor;
 }
 
@@ -309,11 +314,11 @@ vtkSmartPointer<vtkActor> getOutlineActor(
         vtkSmartPointer<vtkPolyDataMapper>::New();
     mapper->SetInputData(polyData);
 
-    vtkNew<vtkNamedColors> colors;
-
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
-    actor->GetProperty()->SetColor(colors->GetColor3d("Tomato").GetData());
+
+    vtkNew<vtkNamedColors> colors;
+    actor->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
     actor->GetProperty()->SetLineWidth(3.0);
 
     return actor;
@@ -353,19 +358,55 @@ vtkSmartPointer<vtkActor> getRotateArrowOutlineActor(
     return getOutlineActor(horizontalOffsets, verticalOffsets, direction);
 }
 
-vtkStandardNewMacro(modernTransformRepresentation);
-
 modernTransformRepresentation::modernTransformRepresentation()
 {
-    const std::array<vtkSmartPointer<vtkActor>, 3> arrowShapeActors{
+    std::array<vtkSmartPointer<vtkActor>, 3> translateShapeActors_ = {
         getTranslateArrowShapeActor(ARROWDIRECTION::X),
         getTranslateArrowShapeActor(ARROWDIRECTION::Y),
         getTranslateArrowShapeActor(ARROWDIRECTION::Z)};
 
-    const std::array<vtkSmartPointer<vtkActor>, 3> arrowOutlineActors{
+    std::array<vtkSmartPointer<vtkActor>, 3> translateOutlineActors_ = {
         getTranslateArrowOutlineActor(ARROWDIRECTION::X),
         getTranslateArrowOutlineActor(ARROWDIRECTION::Y),
         getTranslateArrowOutlineActor(ARROWDIRECTION::Z)};
+
+    for (auto i = 0; i < 3; i++)
+    {
+        translateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
+        translateActors_[i]->AddPart(translateShapeActors_[i]);
+        translateActors_[i]->AddPart(translateOutlineActors_[i]);
+
+        translateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        translateActors_[i]->SetUserTransform(trans);
+    }
+
+    std::array<vtkSmartPointer<vtkActor>, 3> rotateShapeActors_ = {
+        getRotateArrowShapeActor(ARROWDIRECTION::Y),
+        getRotateArrowShapeActor(ARROWDIRECTION::Z),
+        getRotateArrowShapeActor(ARROWDIRECTION::X)};
+
+    std::array<vtkSmartPointer<vtkActor>, 3> rotateOutlineActors_ = {
+        getRotateArrowOutlineActor(ARROWDIRECTION::Y),
+        getRotateArrowOutlineActor(ARROWDIRECTION::Z),
+        getRotateArrowOutlineActor(ARROWDIRECTION::X)};
+
+    for (auto i = 0; i < 3; i++)
+    {
+        rotateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
+        rotateActors_[i]->AddPart(rotateShapeActors_[i]);
+        rotateActors_[i]->AddPart(rotateOutlineActors_[i]);
+
+        rotateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        rotateActors_[i]->SetUserTransform(trans);
+    }
 
     auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
     {
@@ -383,54 +424,12 @@ modernTransformRepresentation::modernTransformRepresentation()
 
         scaleConeActor = vtkSmartPointer<vtkActor>::New();
         scaleConeActor->SetMapper(mapper);
-        scaleConeActor->GetProperty()->SetDiffuse(0.8);
-        scaleConeActor->GetProperty()->SetSpecular(0.5);
-        scaleConeActor->GetProperty()->SetSpecularPower(30.0);
-        // coneActor->GetProperty()->SetColor(1.0, 1.0, 1.0);
 
         vtkSmartPointer<vtkTransform> trans =
             vtkSmartPointer<vtkTransform>::New();
         trans->Translate(SCALE_INDICATOR_POS, SCALE_INDICATOR_POS,
                          SCALE_INDICATOR_POS);
         scaleConeActor->SetUserTransform(trans);
-    }
-
-    const std::array<vtkSmartPointer<vtkActor>, 3> rotateArrowShapeActors{
-        getRotateArrowShapeActor(ARROWDIRECTION::X),
-        getRotateArrowShapeActor(ARROWDIRECTION::Y),
-        getRotateArrowShapeActor(ARROWDIRECTION::Z)};
-
-    const std::array<vtkSmartPointer<vtkActor>, 3> rotateArrowOutlineActors{
-        getRotateArrowOutlineActor(ARROWDIRECTION::X),
-        getRotateArrowOutlineActor(ARROWDIRECTION::Y),
-        getRotateArrowOutlineActor(ARROWDIRECTION::Z)};
-
-    for (auto i = 0; i < 3; i++)
-    {
-        rotateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
-        rotateActors_[i]->AddPart(rotateArrowShapeActors[i]);
-        rotateActors_[i]->AddPart(rotateArrowOutlineActors[i]);
-
-        rotateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
-
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-
-        rotateActors_[i]->SetUserTransform(trans);
-    }
-
-    for (auto i = 0; i < 3; i++)
-    {
-        translateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
-        translateActors_[i]->AddPart(arrowShapeActors[i]);
-        translateActors_[i]->AddPart(arrowOutlineActors[i]);
-
-        translateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
-
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-
-        translateActors_[i]->SetUserTransform(trans);
     }
 
     {
@@ -480,10 +479,8 @@ modernTransformRepresentation::modernTransformRepresentation()
     bounds[4] = -DEFAULT_SIZE;
     bounds[5] = DEFAULT_SIZE;
     this->PlaceWidget(bounds);
-}
 
-modernTransformRepresentation::~modernTransformRepresentation()
-{
+    this->Highlight(0);
 }
 
 void modernTransformRepresentation::StartWidgetInteraction(double e[2])
@@ -631,8 +628,7 @@ void modernTransformRepresentation::Highlight(int highlight)
             vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
         if (actor != nullptr)
         {
-            actor->GetProperty()->SetDiffuse(0.8);
-            actor->GetProperty()->SetSpecular(0.5);
+            actor->GetProperty()->SetOpacity(0.7);
         }
     }
 
@@ -679,8 +675,7 @@ void modernTransformRepresentation::Highlight(int highlight)
                 vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
             if (actor != nullptr)
             {
-                actor->GetProperty()->SetDiffuse(1.0);
-                actor->GetProperty()->SetSpecular(0.0);
+                actor->GetProperty()->SetOpacity(1.0);
             }
         }
     }
