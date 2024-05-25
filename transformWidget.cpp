@@ -141,6 +141,12 @@ void transformWidget::CreateDefaultRepresentation()
     }
 }
 
+void transformWidget::SetRepresentation(transformRepresentation *rep)
+{
+    this->Superclass::SetWidgetRepresentation(
+        vtkWidgetRepresentation::SafeDownCast(rep));
+}
+
 void transformWidget::PrintSelf(ostream &os, vtkIndent indent)
 {
     vtkAbstractWidget::PrintSelf(os, indent);

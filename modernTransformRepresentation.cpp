@@ -1,3 +1,4 @@
+#include <vector>
 #include <vtkActor.h>
 #include <vtkAssembly.h>
 #include <vtkAssemblyPath.h>
@@ -7,269 +8,404 @@
 #include <vtkConeSource.h>
 #include <vtkCylinderSource.h>
 #include <vtkInteractorObserver.h>
+#include <vtkNamedColors.h>
 #include <vtkObjectFactory.h>
 #include <vtkParametricFunctionSource.h>
 #include <vtkParametricTorus.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPolyLine.h>
+#include <vtkPolygon.h>
 #include <vtkProperty.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkTransform.h>
+#include <vtkTriangleFilter.h>
 #include <vtkWindow.h>
 
-#include "simpleTransformRepresentation.hpp"
+#include "modernTransformRepresentation.hpp"
 
-vtkStandardNewMacro(simpleTransformRepresentation);
+vtkStandardNewMacro(modernTransformRepresentation);
+
+enum class ARROWDIRECTION
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
+
+const double ROTATE_ARROW_LEFT_ANGLE = 135.0;
+const double ROTATE_ARROW_RIGHT_ANGLE = 45.0;
+const int NUMBER_OF_ROTATE_ARROW_ARC_POINTS = 10;
+const int NUMBER_OF_ROTATE_ARROW_POINTS =
+    NUMBER_OF_ROTATE_ARROW_ARC_POINTS * 2 + 6;
+
+const static double ARROW_SHAFT_WIDTH = 0.1;
+const static double ARROW_HEAD_WIDTH = 0.2;
+const static double ARROW_HEAD_LENGTH = 0.1;
+
+const static double ROTATE_ARROW_RADIUS = 0.3;
 
 const static double DEFAULT_SIZE = 1.0;
 const static double RING_RADIUS = 0.5;
 const static double RING_CROSS_SECTION_RADIUS = 0.025;
 const static double SCALE_INDICATOR_POS = RING_RADIUS * 1.50;
+const static int NUMBER_OF_ARROW_POINTS = 7;
 
-simpleTransformRepresentation::simpleTransformRepresentation()
+/**
+Shape of the arrow:
+    /\
+   /  \
+  /    \
+ /_    _\
+   |  |
+   |__|
+**/
+
+const static std::vector<double> TRANSLATE_ARROW_HORIZONTAL_OFFSETS{
+    -0.075, -0.075, -0.15, 0.0, 0.15, 0.075, 0.075};
+
+const static std::vector<double> TRANSLATE_ARROW_VERTICAL_OFFSETS{
+    0.5, 0.75, 0.75, 1.0, 0.75, 0.75, 0.5};
+
+const static std::vector<double> SCALE_ARROW_HORIZONTAL_OFFSETS{
+    0.0, -0.1, -0.05, -0.05, -0.1, 0.0, 0.1, 0.05, 0.05, 0.1};
+
+const static std::vector<double> SCALE_ARROW_VERTICAL_OFFSETS{
+    0.6, 0.7, 0.7, 0.9, 0.9, 1.0, 0.9, 0.9, 0.7, 0.7};
+
+void getRotateArrowPoints(std::vector<double> &horizontalOffsets,
+                          std::vector<double> &verticalOffsets)
 {
-    const std::array<std::array<double, 3>, 3> lineDirection = {
-        {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
+    horizontalOffsets.resize(NUMBER_OF_ROTATE_ARROW_POINTS);
+    verticalOffsets.resize(NUMBER_OF_ROTATE_ARROW_POINTS);
 
-    const std::array<std::array<double, 3>, 3> coneDirection = {
-        {{0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}}};
+    const auto headRadians = ARROW_HEAD_LENGTH / ROTATE_ARROW_RADIUS;
 
-    std::array<vtkSmartPointer<vtkActor>, 3> axisRingCircleActors;
-    std::array<vtkSmartPointer<vtkActor>, 3> axisRingConeActors;
-    for (auto i = 0; i < 3; i++)
+    const double resolutionAngle =
+        (ROTATE_ARROW_LEFT_ANGLE - ROTATE_ARROW_RIGHT_ANGLE) /
+        (NUMBER_OF_ROTATE_ARROW_ARC_POINTS - 1);
+
+    int indexCounter = 0;
+
     {
+        const double angleRadians =
+            vtkMath::RadiansFromDegrees(ROTATE_ARROW_LEFT_ANGLE) + headRadians;
+        const double h = std::cos(angleRadians) * ROTATE_ARROW_RADIUS;
+        const double v = std::sin(angleRadians) * ROTATE_ARROW_RADIUS;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    {
+        const double angleRadians =
+            vtkMath::RadiansFromDegrees(ROTATE_ARROW_LEFT_ANGLE);
+        const double h = std::cos(angleRadians) *
+                         (ROTATE_ARROW_RADIUS + ARROW_HEAD_WIDTH * 0.5);
+        const double v = std::sin(angleRadians) *
+                         (ROTATE_ARROW_RADIUS + ARROW_HEAD_WIDTH * 0.5);
+
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    for (double angle = ROTATE_ARROW_LEFT_ANGLE;
+         angle >= ROTATE_ARROW_RIGHT_ANGLE; angle -= resolutionAngle)
+    {
+        const double angleRadians = vtkMath::RadiansFromDegrees(angle);
+        const double h = std::cos(angleRadians) *
+                         (ROTATE_ARROW_RADIUS + ARROW_SHAFT_WIDTH * 0.5);
+        const double v = std::sin(angleRadians) *
+                         (ROTATE_ARROW_RADIUS + ARROW_SHAFT_WIDTH * 0.5);
+
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    {
+        const double angleRadians =
+            vtkMath::RadiansFromDegrees(ROTATE_ARROW_RIGHT_ANGLE);
+        const double h = std::cos(angleRadians) *
+                         (ROTATE_ARROW_RADIUS + ARROW_HEAD_WIDTH * 0.5);
+        const double v = std::sin(angleRadians) *
+                         (ROTATE_ARROW_RADIUS + ARROW_HEAD_WIDTH * 0.5);
+
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    {
+        const double angleRadians =
+            vtkMath::RadiansFromDegrees(ROTATE_ARROW_RIGHT_ANGLE) - headRadians;
+        const double h = std::cos(angleRadians) * ROTATE_ARROW_RADIUS;
+        const double v = std::sin(angleRadians) * ROTATE_ARROW_RADIUS;
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    {
+        const double angleRadians =
+            vtkMath::RadiansFromDegrees(ROTATE_ARROW_RIGHT_ANGLE);
+        const double h = std::cos(angleRadians) *
+                         (ROTATE_ARROW_RADIUS - ARROW_HEAD_WIDTH * 0.5);
+        const double v = std::sin(angleRadians) *
+                         (ROTATE_ARROW_RADIUS - ARROW_HEAD_WIDTH * 0.5);
+
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    for (double angle = ROTATE_ARROW_RIGHT_ANGLE;
+         angle <= ROTATE_ARROW_LEFT_ANGLE; angle += resolutionAngle)
+    {
+        const double angleRadians = vtkMath::RadiansFromDegrees(angle);
+        const double h = std::cos(angleRadians) *
+                         (ROTATE_ARROW_RADIUS - ARROW_SHAFT_WIDTH * 0.5);
+        const double v = std::sin(angleRadians) *
+                         (ROTATE_ARROW_RADIUS - ARROW_SHAFT_WIDTH * 0.5);
+
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+        indexCounter++;
+    }
+
+    {
+        const double angleRadians =
+            vtkMath::RadiansFromDegrees(ROTATE_ARROW_LEFT_ANGLE);
+        const double h = std::cos(angleRadians) *
+                         (ROTATE_ARROW_RADIUS - ARROW_HEAD_WIDTH * 0.5);
+        const double v = std::sin(angleRadians) *
+                         (ROTATE_ARROW_RADIUS - ARROW_HEAD_WIDTH * 0.5);
+
+        horizontalOffsets[indexCounter] = h;
+        verticalOffsets[indexCounter] = v;
+    }
+}
+
+vtkSmartPointer<vtkActor> getShapeActor(
+    const std::vector<double> &horizontalOffsets,
+    const std::vector<double> &verticalOffsets, const ARROWDIRECTION &direction)
+{
+    if (horizontalOffsets.size() != verticalOffsets.size())
+    {
+        return nullptr;
+    }
+
+    // Step 1: Create the points for the arrow
+    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+    points->SetNumberOfPoints(horizontalOffsets.size());
+    for (int i = 0; i < points->GetNumberOfPoints(); i++)
+    {
+        if (direction == ARROWDIRECTION::X)
         {
-            vtkNew<vtkParametricTorus> paramTorus;
-            paramTorus->SetRingRadius(RING_RADIUS);
-            paramTorus->SetCrossSectionRadius(RING_CROSS_SECTION_RADIUS);
-
-            vtkNew<vtkParametricFunctionSource> paramSource;
-            paramSource->SetParametricFunction(paramTorus);
-            paramSource->SetUResolution(60);
-            paramSource->SetVResolution(20);
-            paramSource->Update();
-
-            vtkNew<vtkPolyDataMapper> mapper;
-            mapper->SetInputConnection(paramSource->GetOutputPort());
-
-            axisRingCircleActors[i] = vtkSmartPointer<vtkActor>::New();
-            axisRingCircleActors[i]->SetMapper(mapper);
-            axisRingCircleActors[i]->GetProperty()->SetDiffuse(0.8);
-            axisRingCircleActors[i]->GetProperty()->SetSpecular(0.5);
-            axisRingCircleActors[i]->GetProperty()->SetSpecularPower(30.0);
-            axisRingCircleActors[i]->GetProperty()->SetOpacity(1.0);
-            axisRingCircleActors[i]->GetProperty()->SetColor(
-                axisNormalColor_[i][0], axisNormalColor_[i][1],
-                axisNormalColor_[i][2]);
+            points->SetPoint(i, verticalOffsets[i], horizontalOffsets[i], 0.0);
         }
-
+        else if (direction == ARROWDIRECTION::Y)
         {
-            vtkNew<vtkConeSource> coneSource;
-            coneSource->SetResolution(30);
-            coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
-            coneSource->SetAngle(20);
-            coneSource->SetDirection(coneDirection[i].data());
-            coneSource->Update();
-
-            vtkNew<vtkPolyDataMapper> mapper;
-            mapper->SetInputConnection(coneSource->GetOutputPort());
-
-            axisRingConeActors[i] = vtkSmartPointer<vtkActor>::New();
-            axisRingConeActors[i]->SetMapper(mapper);
-            axisRingConeActors[i]->GetProperty()->SetDiffuse(0.8);
-            axisRingConeActors[i]->GetProperty()->SetSpecular(0.5);
-            axisRingConeActors[i]->GetProperty()->SetSpecularPower(30.0);
-            axisRingConeActors[i]->GetProperty()->SetColor(
-                axisNormalColor_[i][0], axisNormalColor_[i][1],
-                axisNormalColor_[i][2]);
+            points->SetPoint(i, 0.0, verticalOffsets[i], horizontalOffsets[i]);
         }
-    }
-
-    std::array<vtkSmartPointer<vtkActor>, 3> axisLineActors;
-    std::array<vtkSmartPointer<vtkActor>, 3> startConeActors;
-    std::array<vtkSmartPointer<vtkActor>, 3> endConeActors;
-    for (auto i = 0; i < 3; i++)
-    {
+        else
         {
-            vtkNew<vtkCylinderSource> cylinderSource;
-            cylinderSource->SetResolution(20);
-            cylinderSource->SetHeight(2 * RING_RADIUS * 1.50);
-            cylinderSource->SetRadius(RING_CROSS_SECTION_RADIUS);
-
-            vtkNew<vtkPolyDataMapper> mapper;
-            mapper->SetInputConnection(cylinderSource->GetOutputPort());
-
-            axisLineActors[i] = vtkSmartPointer<vtkActor>::New();
-            axisLineActors[i]->SetMapper(mapper);
-            axisLineActors[i]->GetProperty()->SetDiffuse(0.8);
-            axisLineActors[i]->GetProperty()->SetSpecular(0.5);
-            axisLineActors[i]->GetProperty()->SetSpecularPower(30.0);
-            axisLineActors[i]->GetProperty()->SetColor(axisNormalColor_[i][0],
-                                                       axisNormalColor_[i][1],
-                                                       axisNormalColor_[i][2]);
+            points->SetPoint(i, horizontalOffsets[i], 0.0, verticalOffsets[i]);
         }
+    }
+
+    // Step 2: Create the polygon for the arrow
+    vtkSmartPointer<vtkPolygon> polygon = vtkSmartPointer<vtkPolygon>::New();
+    polygon->GetPointIds()->SetNumberOfIds(points->GetNumberOfPoints());
+    for (int i = 0; i < polygon->GetNumberOfPoints(); i++)
+    {
+        polygon->GetPointIds()->SetId(i, i);
+    }
+
+    // Step 3: Create a cell array to store the polygon
+    vtkSmartPointer<vtkCellArray> polygonCell =
+        vtkSmartPointer<vtkCellArray>::New();
+    polygonCell->InsertNextCell(polygon);
+
+    // Step 4: Create a polydata to store the points and the polygon
+    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetPolys(polygonCell);
+
+    // Step 5: Convert input polygonCell and strips to triangles
+    vtkSmartPointer<vtkTriangleFilter> geometryFilter =
+        vtkSmartPointer<vtkTriangleFilter>::New();
+    geometryFilter->SetInputData(polyData);
+    geometryFilter->Update();
+
+    // Step 6: Create a mapper and actor
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(geometryFilter->GetOutput());
+
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+
+    return actor;
+}
+
+vtkSmartPointer<vtkActor> getOutlineActor(
+    const std::vector<double> &horizontalOffsets,
+    const std::vector<double> &verticalOffsets, const ARROWDIRECTION &direction)
+{
+    if (horizontalOffsets.size() != verticalOffsets.size())
+    {
+        return nullptr;
+    }
+
+    // Step 1: Create the points for the arrow
+    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+    points->SetNumberOfPoints(horizontalOffsets.size() + 1);
+    for (int i = 0; i < points->GetNumberOfPoints() - 1; i++)
+    {
+        if (direction == ARROWDIRECTION::X)
         {
-            vtkNew<vtkConeSource> startConeSource;
-            startConeSource->SetResolution(20);
-            startConeSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
-            startConeSource->SetAngle(20);
-            startConeSource->SetCenter(
-                lineDirection[i][0] * RING_RADIUS * 1.50,
-                lineDirection[i][1] * RING_RADIUS * 1.50,
-                lineDirection[i][2] * RING_RADIUS * 1.50);
-            startConeSource->SetDirection(
-                lineDirection[i][0], lineDirection[i][1], lineDirection[i][2]);
-            startConeSource->Update();
-
-            vtkNew<vtkPolyDataMapper> mapper;
-            mapper->SetInputConnection(startConeSource->GetOutputPort());
-
-            startConeActors[i] = vtkSmartPointer<vtkActor>::New();
-            startConeActors[i]->SetMapper(mapper);
-            startConeActors[i]->GetProperty()->SetDiffuse(0.8);
-            startConeActors[i]->GetProperty()->SetSpecular(0.5);
-            startConeActors[i]->GetProperty()->SetSpecularPower(30.0);
-            startConeActors[i]->GetProperty()->SetColor(axisNormalColor_[i][0],
-                                                        axisNormalColor_[i][1],
-                                                        axisNormalColor_[i][2]);
+            points->SetPoint(i, verticalOffsets[i], horizontalOffsets[i], 0.0);
         }
-
+        else if (direction == ARROWDIRECTION::Y)
         {
-            vtkNew<vtkConeSource> endConeSource;
-            endConeSource->SetResolution(20);
-            endConeSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
-            endConeSource->SetAngle(20);
-            endConeSource->SetCenter(-lineDirection[i][0] * RING_RADIUS * 1.50,
-                                     -lineDirection[i][1] * RING_RADIUS * 1.50,
-                                     -lineDirection[i][2] * RING_RADIUS * 1.50);
-            endConeSource->SetDirection(-lineDirection[i][0],
-                                        -lineDirection[i][1],
-                                        -lineDirection[i][2]);
-            endConeSource->Update();
-
-            vtkNew<vtkPolyDataMapper> mapper;
-            mapper->SetInputConnection(endConeSource->GetOutputPort());
-
-            endConeActors[i] = vtkSmartPointer<vtkActor>::New();
-            endConeActors[i]->SetMapper(mapper);
-            endConeActors[i]->GetProperty()->SetDiffuse(0.8);
-            endConeActors[i]->GetProperty()->SetSpecular(0.5);
-            endConeActors[i]->GetProperty()->SetSpecularPower(30.0);
-            endConeActors[i]->GetProperty()->SetColor(axisNormalColor_[i][0],
-                                                      axisNormalColor_[i][1],
-                                                      axisNormalColor_[i][2]);
+            points->SetPoint(i, 0.0, verticalOffsets[i], horizontalOffsets[i]);
+        }
+        else
+        {
+            points->SetPoint(i, horizontalOffsets[i], 0.0, verticalOffsets[i]);
         }
     }
 
+    if (direction == ARROWDIRECTION::X)
     {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->RotateY(90);
-        axisRingCircleActors[0]->SetUserTransform(trans);
+        points->SetPoint(points->GetNumberOfPoints() - 1, verticalOffsets[0],
+                         horizontalOffsets[0], 0.0);
+    }
+    else if (direction == ARROWDIRECTION::Y)
+    {
+        points->SetPoint(points->GetNumberOfPoints() - 1, 0.0,
+                         verticalOffsets[0], horizontalOffsets[0]);
+    }
+    else
+    {
+        points->SetPoint(points->GetNumberOfPoints() - 1, horizontalOffsets[0],
+                         0.0, verticalOffsets[0]);
     }
 
+    // Step 2: Create the polygon for the arrow
+    vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
+    polyLine->GetPointIds()->SetNumberOfIds(points->GetNumberOfPoints());
+    for (int i = 0; i < polyLine->GetNumberOfPoints(); i++)
     {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->RotateX(90);
-        axisRingCircleActors[1]->SetUserTransform(trans);
+        polyLine->GetPointIds()->SetId(i, i);
     }
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        axisRingCircleActors[2]->SetUserTransform(trans);
-    }
+    // Step 3: Create a cell array to store the polygon
+    vtkSmartPointer<vtkCellArray> polygonCell =
+        vtkSmartPointer<vtkCellArray>::New();
+    polygonCell->InsertNextCell(polyLine);
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(0.0, 0.0, -RING_RADIUS);
-        axisRingConeActors[0]->SetUserTransform(trans);
-    }
+    // Step 4: Create a polydata to store the points and the polygon
+    vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetLines(polygonCell);
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(-RING_RADIUS, 0.0, 0.0);
-        axisRingConeActors[1]->SetUserTransform(trans);
-    }
+    // Step 6: Create a mapper and actor
+    vtkSmartPointer<vtkPolyDataMapper> mapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(polyData);
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(0.0, -RING_RADIUS, 0.0);
-        axisRingConeActors[2]->SetUserTransform(trans);
-    }
+    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->RotateZ(90);
-        axisLineActors[0]->SetUserTransform(trans);
-    }
+    actor->GetProperty()->SetLineWidth(3.0);
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        axisLineActors[1]->SetUserTransform(trans);
-    }
+    return actor;
+}
 
-    {
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->RotateX(90);
-        axisLineActors[2]->SetUserTransform(trans);
-    }
+vtkSmartPointer<vtkActor> getTranslateArrowShapeActor(
+    const ARROWDIRECTION &direction)
+{
+    return getShapeActor(TRANSLATE_ARROW_HORIZONTAL_OFFSETS,
+                         TRANSLATE_ARROW_VERTICAL_OFFSETS, direction);
+}
 
-    auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
-    {
-        const std::array<double, 3> direction = {1.0, 1.0, 1.0};
+vtkSmartPointer<vtkActor> getTranslateArrowOutlineActor(
+    const ARROWDIRECTION &direction)
+{
+    return getOutlineActor(TRANSLATE_ARROW_HORIZONTAL_OFFSETS,
+                           TRANSLATE_ARROW_VERTICAL_OFFSETS, direction);
+}
 
-        vtkNew<vtkConeSource> coneSource;
-        coneSource->SetResolution(30);
-        coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
-        coneSource->SetAngle(20);
-        coneSource->SetDirection(direction.data());
-        coneSource->Update();
+vtkSmartPointer<vtkActor> getRotateArrowShapeActor(
+    const ARROWDIRECTION &direction)
+{
+    std::vector<double> horizontalOffsets;
+    std::vector<double> verticalOffsets;
+    getRotateArrowPoints(horizontalOffsets, verticalOffsets);
 
-        vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputConnection(coneSource->GetOutputPort());
+    return getShapeActor(horizontalOffsets, verticalOffsets, direction);
+}
 
-        scaleConeActor = vtkSmartPointer<vtkActor>::New();
-        scaleConeActor->SetMapper(mapper);
-        scaleConeActor->GetProperty()->SetDiffuse(0.8);
-        scaleConeActor->GetProperty()->SetSpecular(0.5);
-        scaleConeActor->GetProperty()->SetSpecularPower(30.0);
-        // coneActor->GetProperty()->SetColor(1.0, 1.0, 1.0);
+vtkSmartPointer<vtkActor> getRotateArrowOutlineActor(
+    const ARROWDIRECTION &direction)
+{
+    std::vector<double> horizontalOffsets;
+    std::vector<double> verticalOffsets;
+    getRotateArrowPoints(horizontalOffsets, verticalOffsets);
 
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(SCALE_INDICATOR_POS, SCALE_INDICATOR_POS,
-                         SCALE_INDICATOR_POS);
-        scaleConeActor->SetUserTransform(trans);
-    }
+    return getOutlineActor(horizontalOffsets, verticalOffsets, direction);
+}
 
-    for (auto i = 0; i < 3; i++)
-    {
-        rotateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
-        rotateActors_[i]->AddPart(axisRingCircleActors[i]);
-        rotateActors_[i]->AddPart(axisRingConeActors[i]);
+vtkSmartPointer<vtkActor> getScaleArrowShapeActor()
+{
+    auto actor = getShapeActor(SCALE_ARROW_HORIZONTAL_OFFSETS,
+                               SCALE_ARROW_VERTICAL_OFFSETS, ARROWDIRECTION::X);
 
-        rotateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+    trans->RotateX(45.0);
+    trans->RotateZ(45.0);
+    trans->RotateY(45.0);
+    actor->SetUserTransform(trans);
 
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
+    return actor;
+}
 
-        rotateActors_[i]->SetUserTransform(trans);
-    }
+vtkSmartPointer<vtkActor> getScaleArrowOutlineActor()
+{
+    auto actor =
+        getOutlineActor(SCALE_ARROW_HORIZONTAL_OFFSETS,
+                        SCALE_ARROW_VERTICAL_OFFSETS, ARROWDIRECTION::X);
+
+    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+    trans->RotateX(45.0);
+    trans->RotateZ(45.0);
+    trans->RotateY(45.0);
+    actor->SetUserTransform(trans);
+
+    return actor;
+}
+
+modernTransformRepresentation::modernTransformRepresentation()
+{
+    vtkNew<vtkNamedColors> colors;
+
+    translateShapeActors_ = {getTranslateArrowShapeActor(ARROWDIRECTION::X),
+                             getTranslateArrowShapeActor(ARROWDIRECTION::Y),
+                             getTranslateArrowShapeActor(ARROWDIRECTION::Z)};
+
+    translateOutlineActors_ = {
+        getTranslateArrowOutlineActor(ARROWDIRECTION::X),
+        getTranslateArrowOutlineActor(ARROWDIRECTION::Y),
+        getTranslateArrowOutlineActor(ARROWDIRECTION::Z)};
 
     for (auto i = 0; i < 3; i++)
     {
         translateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
-        translateActors_[i]->AddPart(axisLineActors[i]);
-        translateActors_[i]->AddPart(startConeActors[i]);
-        translateActors_[i]->AddPart(endConeActors[i]);
+        translateActors_[i]->AddPart(translateShapeActors_[i]);
+        translateActors_[i]->AddPart(translateOutlineActors_[i]);
 
         translateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
 
@@ -279,9 +415,34 @@ simpleTransformRepresentation::simpleTransformRepresentation()
         translateActors_[i]->SetUserTransform(trans);
     }
 
+    rotateShapeActors_ = {getRotateArrowShapeActor(ARROWDIRECTION::Y),
+                          getRotateArrowShapeActor(ARROWDIRECTION::Z),
+                          getRotateArrowShapeActor(ARROWDIRECTION::X)};
+
+    rotateOutlineActors_ = {getRotateArrowOutlineActor(ARROWDIRECTION::Y),
+                            getRotateArrowOutlineActor(ARROWDIRECTION::Z),
+                            getRotateArrowOutlineActor(ARROWDIRECTION::X)};
+
+    for (auto i = 0; i < 3; i++)
+    {
+        rotateActors_[i] = vtkSmartPointer<vtkAssembly>::New();
+        rotateActors_[i]->AddPart(rotateShapeActors_[i]);
+        rotateActors_[i]->AddPart(rotateOutlineActors_[i]);
+
+        rotateActors_[i]->SetOrigin(0.0, 0.0, 0.0);
+
+        vtkSmartPointer<vtkTransform> trans =
+            vtkSmartPointer<vtkTransform>::New();
+
+        rotateActors_[i]->SetUserTransform(trans);
+    }
+
+    scaleShapeActor_ = getScaleArrowShapeActor();
+    scaleOutlineActor_ = getScaleArrowOutlineActor();
     {
         scaleActor_ = vtkSmartPointer<vtkAssembly>::New();
-        scaleActor_->AddPart(scaleConeActor);
+        scaleActor_->AddPart(scaleShapeActor_);
+        scaleActor_->AddPart(scaleOutlineActor_);
 
         scaleActor_->SetOrigin(0.0, 0.0, 0.0);
 
@@ -326,9 +487,11 @@ simpleTransformRepresentation::simpleTransformRepresentation()
     bounds[4] = -DEFAULT_SIZE;
     bounds[5] = DEFAULT_SIZE;
     this->PlaceWidget(bounds);
+
+    this->Highlight(0);
 }
 
-void simpleTransformRepresentation::StartWidgetInteraction(double e[2])
+void modernTransformRepresentation::StartWidgetInteraction(double e[2])
 {
     auto path = this->GetAssemblyPath(e[0], e[1], 0., picker_);
     if (path != nullptr)
@@ -339,7 +502,7 @@ void simpleTransformRepresentation::StartWidgetInteraction(double e[2])
     prevEventPosition_ = {e[0], e[1], 0.0};
 }
 
-void simpleTransformRepresentation::WidgetInteraction(double e[2])
+void modernTransformRepresentation::WidgetInteraction(double e[2])
 {
     // refer to vtkBoxWidget.cxx
     double focalPoint[4];
@@ -362,7 +525,7 @@ void simpleTransformRepresentation::WidgetInteraction(double e[2])
     this->Modified();
 }
 
-void simpleTransformRepresentation::PlaceWidget(double bounds[6])
+void modernTransformRepresentation::PlaceWidget(double bounds[6])
 {
     // bounds[6]: xmin, xmax, ymin, ymax, zmin
     const std::array<double, 3> minPoint = {bounds[0], bounds[2], bounds[4]};
@@ -394,7 +557,7 @@ void simpleTransformRepresentation::PlaceWidget(double bounds[6])
     assembleActor_->SetUserTransform(trans);
 }
 
-int simpleTransformRepresentation::ComputeInteractionState(
+int modernTransformRepresentation::ComputeInteractionState(
     int x, int y, int vtkNotUsed(modify))
 {
     if (!this->Renderer || !this->Renderer->IsInViewport(x, y))
@@ -448,7 +611,7 @@ int simpleTransformRepresentation::ComputeInteractionState(
     return this->InteractionState;
 }
 
-void simpleTransformRepresentation::GetTransform(vtkTransform *t)
+void modernTransformRepresentation::GetTransform(vtkTransform *t)
 {
     t->Identity();
     t->PostMultiply();
@@ -459,8 +622,10 @@ void simpleTransformRepresentation::GetTransform(vtkTransform *t)
     t->Concatenate(assembleActor_->GetUserMatrix());
 }
 
-void simpleTransformRepresentation::Highlight(int highlight)
+void modernTransformRepresentation::Highlight(int highlight)
 {
+    vtkNew<vtkNamedColors> colors;
+
     vtkNew<vtkPropCollection> propsCollection;
     assembleActor_->GetActors(propsCollection);
 
@@ -473,10 +638,44 @@ void simpleTransformRepresentation::Highlight(int highlight)
             vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
         if (actor != nullptr)
         {
-            actor->GetProperty()->SetDiffuse(0.8);
-            actor->GetProperty()->SetSpecular(0.5);
+            actor->GetProperty()->SetOpacity(0.75);
         }
     }
+
+    {
+        translateShapeActors_[0]->GetProperty()->SetColor(
+            colors->GetColor3d("Red").GetData());
+
+        translateShapeActors_[1]->GetProperty()->SetColor(
+            colors->GetColor3d("Green").GetData());
+
+        translateShapeActors_[2]->GetProperty()->SetColor(
+            colors->GetColor3d("Blue").GetData());
+
+        rotateShapeActors_[0]->GetProperty()->SetColor(
+            colors->GetColor3d("Red").GetData());
+
+        rotateShapeActors_[1]->GetProperty()->SetColor(
+            colors->GetColor3d("Green").GetData());
+
+        rotateShapeActors_[2]->GetProperty()->SetColor(
+            colors->GetColor3d("Blue").GetData());
+    }
+
+    for (auto oneActor : translateOutlineActors_)
+    {
+        oneActor->GetProperty()->SetColor(
+            colors->GetColor3d("DimGray").GetData());
+    }
+
+    for (auto oneActor : rotateOutlineActors_)
+    {
+        oneActor->GetProperty()->SetColor(
+            colors->GetColor3d("DimGray").GetData());
+    }
+
+    scaleOutlineActor_->GetProperty()->SetColor(
+        colors->GetColor3d("DimGray").GetData());
 
     if (highlight)
     {
@@ -486,30 +685,51 @@ void simpleTransformRepresentation::Highlight(int highlight)
         if (state == INTERACTIONSTATE::onXRing)
         {
             rotateActors_[0]->GetActors(propsCollection);
+
+            rotateOutlineActors_[0]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onYRing)
         {
             rotateActors_[1]->GetActors(propsCollection);
+
+            rotateOutlineActors_[1]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onZRing)
         {
             rotateActors_[2]->GetActors(propsCollection);
+
+            rotateOutlineActors_[2]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onXArrow)
         {
             translateActors_[0]->GetActors(propsCollection);
+
+            translateOutlineActors_[0]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onYArrow)
         {
             translateActors_[1]->GetActors(propsCollection);
+
+            translateOutlineActors_[1]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onZArrow)
         {
             translateActors_[2]->GetActors(propsCollection);
+
+            translateOutlineActors_[2]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onScale)
         {
             scaleActor_->GetActors(propsCollection);
+
+            scaleOutlineActor_->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
 
         vtkCollectionSimpleIterator sIt;
@@ -521,14 +741,13 @@ void simpleTransformRepresentation::Highlight(int highlight)
                 vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
             if (actor != nullptr)
             {
-                actor->GetProperty()->SetDiffuse(1.0);
-                actor->GetProperty()->SetSpecular(0.0);
+                actor->GetProperty()->SetOpacity(1.0);
             }
         }
     }
 }
 
-void simpleTransformRepresentation::BuildRepresentation()
+void modernTransformRepresentation::BuildRepresentation()
 {
     if (this->GetMTime() > this->BuildTime ||
         (this->Renderer && this->Renderer->GetVTKWindow() &&
@@ -815,7 +1034,7 @@ void simpleTransformRepresentation::BuildRepresentation()
     }
 }
 
-void simpleTransformRepresentation::GetActors(vtkPropCollection *pc)
+void modernTransformRepresentation::GetActors(vtkPropCollection *pc)
 {
     pc->AddItem(assembleActor_);
 }

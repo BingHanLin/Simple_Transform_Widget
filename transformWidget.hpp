@@ -4,7 +4,7 @@
 
 class vtkCallbackCommand;
 
-class movableAxesRepresentation;
+class transformRepresentation;
 
 class transformWidget : public vtkAbstractWidget
 {
@@ -17,6 +17,8 @@ class transformWidget : public vtkAbstractWidget
     void SetEnabled(int enabling) override;
 
     void CreateDefaultRepresentation() override;
+
+    void SetRepresentation(transformRepresentation *rep);
 
    protected:
     transformWidget();

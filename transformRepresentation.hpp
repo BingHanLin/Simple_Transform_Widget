@@ -27,7 +27,7 @@ class transformRepresentation : public vtkWidgetRepresentation
 
    protected:
     transformRepresentation(){};
-    ~transformRepresentation() override{};
+    virtual ~transformRepresentation() override{};
 
    private:
     transformRepresentation(const transformRepresentation &) = delete;

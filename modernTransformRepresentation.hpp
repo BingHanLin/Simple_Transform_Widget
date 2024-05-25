@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 
+#include <vtkActor.h>
 #include <vtkMatrix4x4.h>
 #include <vtkSmartPointer.h>
 #include <vtkWidgetRepresentation.h>
@@ -9,11 +10,11 @@
 
 class vtkAssembly;
 class vtkCellPicker;
-class simpleTransformRepresentation : public transformRepresentation
+class modernTransformRepresentation : public transformRepresentation
 {
    public:
-    static simpleTransformRepresentation *New();
-    vtkTypeMacro(simpleTransformRepresentation, transformRepresentation);
+    static modernTransformRepresentation *New();
+    vtkTypeMacro(modernTransformRepresentation, transformRepresentation);
 
     void PlaceWidget(double bounds[6]) override;
     void StartWidgetInteraction(double e[2]) override;
@@ -28,11 +29,18 @@ class simpleTransformRepresentation : public transformRepresentation
     void GetTransform(vtkTransform *t);
 
    protected:
-    simpleTransformRepresentation();
+    modernTransformRepresentation();
 
    private:
     const std::array<std::array<double, 3>, 3> axisNormalColor_ = {
         {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}}};
+
+    std::array<vtkSmartPointer<vtkActor>, 3> rotateShapeActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> rotateOutlineActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> translateShapeActors_;
+    std::array<vtkSmartPointer<vtkActor>, 3> translateOutlineActors_;
+    vtkSmartPointer<vtkActor> scaleShapeActor_;
+    vtkSmartPointer<vtkActor> scaleOutlineActor_;
 
     std::array<vtkSmartPointer<vtkAssembly>, 3> rotateActors_;
     std::array<vtkSmartPointer<vtkAssembly>, 3> translateActors_;
@@ -48,7 +56,7 @@ class simpleTransformRepresentation : public transformRepresentation
     std::array<double, 3> placeCenter_;
     std::array<double, 3> placeScale_;
 
-    simpleTransformRepresentation(const simpleTransformRepresentation &) =
+    modernTransformRepresentation(const modernTransformRepresentation &) =
         delete;
-    void operator=(const simpleTransformRepresentation &) = delete;
+    void operator=(const modernTransformRepresentation &) = delete;
 };
