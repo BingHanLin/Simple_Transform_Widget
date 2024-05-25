@@ -62,7 +62,7 @@ Shape of the arrow:
 **/
 
 const static std::vector<double> TRANSLATE_ARROW_HORIZONTAL_OFFSETS{
-    -0.1, -0.1, -0.2, 0.0, 0.2, 0.1, 0.1};
+    -0.075, -0.075, -0.15, 0.0, 0.15, 0.075, 0.075};
 
 const static std::vector<double> TRANSLATE_ARROW_VERTICAL_OFFSETS{
     0.5, 0.75, 0.75, 1.0, 0.75, 0.75, 0.5};
@@ -247,9 +247,6 @@ vtkSmartPointer<vtkActor> getShapeActor(
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
 
-    vtkNew<vtkNamedColors> colors;
-    actor->GetProperty()->SetColor(colors->GetColor3d("White").GetData());
-
     return actor;
 }
 
@@ -323,8 +320,6 @@ vtkSmartPointer<vtkActor> getOutlineActor(
     vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
     actor->SetMapper(mapper);
 
-    vtkNew<vtkNamedColors> colors;
-    actor->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
     actor->GetProperty()->SetLineWidth(3.0);
 
     return actor;
@@ -395,12 +390,13 @@ vtkSmartPointer<vtkActor> getScaleArrowOutlineActor()
 
 modernTransformRepresentation::modernTransformRepresentation()
 {
-    std::array<vtkSmartPointer<vtkActor>, 3> translateShapeActors_ = {
-        getTranslateArrowShapeActor(ARROWDIRECTION::X),
-        getTranslateArrowShapeActor(ARROWDIRECTION::Y),
-        getTranslateArrowShapeActor(ARROWDIRECTION::Z)};
+    vtkNew<vtkNamedColors> colors;
 
-    std::array<vtkSmartPointer<vtkActor>, 3> translateOutlineActors_ = {
+    translateShapeActors_ = {getTranslateArrowShapeActor(ARROWDIRECTION::X),
+                             getTranslateArrowShapeActor(ARROWDIRECTION::Y),
+                             getTranslateArrowShapeActor(ARROWDIRECTION::Z)};
+
+    translateOutlineActors_ = {
         getTranslateArrowOutlineActor(ARROWDIRECTION::X),
         getTranslateArrowOutlineActor(ARROWDIRECTION::Y),
         getTranslateArrowOutlineActor(ARROWDIRECTION::Z)};
@@ -419,15 +415,13 @@ modernTransformRepresentation::modernTransformRepresentation()
         translateActors_[i]->SetUserTransform(trans);
     }
 
-    std::array<vtkSmartPointer<vtkActor>, 3> rotateShapeActors_ = {
-        getRotateArrowShapeActor(ARROWDIRECTION::Y),
-        getRotateArrowShapeActor(ARROWDIRECTION::Z),
-        getRotateArrowShapeActor(ARROWDIRECTION::X)};
+    rotateShapeActors_ = {getRotateArrowShapeActor(ARROWDIRECTION::Y),
+                          getRotateArrowShapeActor(ARROWDIRECTION::Z),
+                          getRotateArrowShapeActor(ARROWDIRECTION::X)};
 
-    std::array<vtkSmartPointer<vtkActor>, 3> rotateOutlineActors_ = {
-        getRotateArrowOutlineActor(ARROWDIRECTION::Y),
-        getRotateArrowOutlineActor(ARROWDIRECTION::Z),
-        getRotateArrowOutlineActor(ARROWDIRECTION::X)};
+    rotateOutlineActors_ = {getRotateArrowOutlineActor(ARROWDIRECTION::Y),
+                            getRotateArrowOutlineActor(ARROWDIRECTION::Z),
+                            getRotateArrowOutlineActor(ARROWDIRECTION::X)};
 
     for (auto i = 0; i < 3; i++)
     {
@@ -443,12 +437,12 @@ modernTransformRepresentation::modernTransformRepresentation()
         rotateActors_[i]->SetUserTransform(trans);
     }
 
-    auto scaleShapeActor = getScaleArrowShapeActor();
-    auto scaleOutlineActor = getScaleArrowOutlineActor();
+    scaleShapeActor_ = getScaleArrowShapeActor();
+    scaleOutlineActor_ = getScaleArrowOutlineActor();
     {
         scaleActor_ = vtkSmartPointer<vtkAssembly>::New();
-        scaleActor_->AddPart(scaleShapeActor);
-        scaleActor_->AddPart(scaleOutlineActor);
+        scaleActor_->AddPart(scaleShapeActor_);
+        scaleActor_->AddPart(scaleOutlineActor_);
 
         scaleActor_->SetOrigin(0.0, 0.0, 0.0);
 
@@ -630,6 +624,8 @@ void modernTransformRepresentation::GetTransform(vtkTransform *t)
 
 void modernTransformRepresentation::Highlight(int highlight)
 {
+    vtkNew<vtkNamedColors> colors;
+
     vtkNew<vtkPropCollection> propsCollection;
     assembleActor_->GetActors(propsCollection);
 
@@ -642,9 +638,44 @@ void modernTransformRepresentation::Highlight(int highlight)
             vtkActor::SafeDownCast(propsCollection->GetNextProp(sIt));
         if (actor != nullptr)
         {
-            actor->GetProperty()->SetOpacity(0.7);
+            actor->GetProperty()->SetOpacity(0.75);
         }
     }
+
+    {
+        translateShapeActors_[0]->GetProperty()->SetColor(
+            colors->GetColor3d("Red").GetData());
+
+        translateShapeActors_[1]->GetProperty()->SetColor(
+            colors->GetColor3d("Green").GetData());
+
+        translateShapeActors_[2]->GetProperty()->SetColor(
+            colors->GetColor3d("Blue").GetData());
+
+        rotateShapeActors_[0]->GetProperty()->SetColor(
+            colors->GetColor3d("Red").GetData());
+
+        rotateShapeActors_[1]->GetProperty()->SetColor(
+            colors->GetColor3d("Green").GetData());
+
+        rotateShapeActors_[2]->GetProperty()->SetColor(
+            colors->GetColor3d("Blue").GetData());
+    }
+
+    for (auto oneActor : translateOutlineActors_)
+    {
+        oneActor->GetProperty()->SetColor(
+            colors->GetColor3d("DimGray").GetData());
+    }
+
+    for (auto oneActor : rotateOutlineActors_)
+    {
+        oneActor->GetProperty()->SetColor(
+            colors->GetColor3d("DimGray").GetData());
+    }
+
+    scaleOutlineActor_->GetProperty()->SetColor(
+        colors->GetColor3d("DimGray").GetData());
 
     if (highlight)
     {
@@ -654,30 +685,51 @@ void modernTransformRepresentation::Highlight(int highlight)
         if (state == INTERACTIONSTATE::onXRing)
         {
             rotateActors_[0]->GetActors(propsCollection);
+
+            rotateOutlineActors_[0]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onYRing)
         {
             rotateActors_[1]->GetActors(propsCollection);
+
+            rotateOutlineActors_[1]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onZRing)
         {
             rotateActors_[2]->GetActors(propsCollection);
+
+            rotateOutlineActors_[2]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onXArrow)
         {
             translateActors_[0]->GetActors(propsCollection);
+
+            translateOutlineActors_[0]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onYArrow)
         {
             translateActors_[1]->GetActors(propsCollection);
+
+            translateOutlineActors_[1]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onZArrow)
         {
             translateActors_[2]->GetActors(propsCollection);
+
+            translateOutlineActors_[2]->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
         else if (state == INTERACTIONSTATE::onScale)
         {
             scaleActor_->GetActors(propsCollection);
+
+            scaleOutlineActor_->GetProperty()->SetColor(
+                colors->GetColor3d("Black").GetData());
         }
 
         vtkCollectionSimpleIterator sIt;
@@ -944,10 +996,6 @@ void modernTransformRepresentation::BuildRepresentation()
                 trans->GetScale(originScaleValues.data());
 
                 const double origin[3] = {0.0, 0.0, 0.0};
-                const double initialPoint[3] = {
-                    SCALE_INDICATOR_POS * originScaleValues[0],
-                    SCALE_INDICATOR_POS * originScaleValues[1],
-                    SCALE_INDICATOR_POS * originScaleValues[2]};
 
                 const double projectedCurrDiffSquare =
                     vtkMath::Distance2BetweenPoints(origin,

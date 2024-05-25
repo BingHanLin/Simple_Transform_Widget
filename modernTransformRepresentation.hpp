@@ -39,6 +39,9 @@ class modernTransformRepresentation : public transformRepresentation
     std::array<vtkSmartPointer<vtkActor>, 3> rotateOutlineActors_;
     std::array<vtkSmartPointer<vtkActor>, 3> translateShapeActors_;
     std::array<vtkSmartPointer<vtkActor>, 3> translateOutlineActors_;
+    vtkSmartPointer<vtkActor> scaleShapeActor_;
+    vtkSmartPointer<vtkActor> scaleOutlineActor_;
+
     std::array<vtkSmartPointer<vtkAssembly>, 3> rotateActors_;
     std::array<vtkSmartPointer<vtkAssembly>, 3> translateActors_;
     vtkSmartPointer<vtkAssembly> scaleActor_;

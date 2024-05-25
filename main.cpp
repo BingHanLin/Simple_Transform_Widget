@@ -74,7 +74,7 @@ int main(int, char *[])
 
     // A mainRenderer and render window
     vtkNew<vtkRenderer> mainRenderer;
-    mainRenderer->SetBackground(colors->GetColor3d("DarkBlue").GetData());
+    mainRenderer->SetBackground(colors->GetColor3d("BurlyWood").GetData());
     mainRenderer->SetActiveCamera(camera);
     mainRenderer->SetLayer(0);
 

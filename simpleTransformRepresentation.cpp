@@ -777,10 +777,6 @@ void simpleTransformRepresentation::BuildRepresentation()
                 trans->GetScale(originScaleValues.data());
 
                 const double origin[3] = {0.0, 0.0, 0.0};
-                const double initialPoint[3] = {
-                    SCALE_INDICATOR_POS * originScaleValues[0],
-                    SCALE_INDICATOR_POS * originScaleValues[1],
-                    SCALE_INDICATOR_POS * originScaleValues[2]};
 
                 const double projectedCurrDiffSquare =
                     vtkMath::Distance2BetweenPoints(origin,
