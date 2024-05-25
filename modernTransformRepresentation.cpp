@@ -61,11 +61,17 @@ Shape of the arrow:
    |__|
 **/
 
-const static std::vector<double> ARROW_HORIZONTAL_OFFSETS{-0.1, -0.1, -0.2, 0.0,
-                                                          0.2,  0.1,  0.1};
+const static std::vector<double> TRANSLATE_ARROW_HORIZONTAL_OFFSETS{
+    -0.1, -0.1, -0.2, 0.0, 0.2, 0.1, 0.1};
 
-const static std::vector<double> ARROW_VERTICAL_OFFSETS{0.5,  0.75, 0.75, 1.0,
-                                                        0.75, 0.75, 0.5};
+const static std::vector<double> TRANSLATE_ARROW_VERTICAL_OFFSETS{
+    0.5, 0.75, 0.75, 1.0, 0.75, 0.75, 0.5};
+
+const static std::vector<double> SCALE_ARROW_HORIZONTAL_OFFSETS{
+    0.0, -0.1, -0.05, -0.05, -0.1, 0.0, 0.1, 0.05, 0.05, 0.1};
+
+const static std::vector<double> SCALE_ARROW_VERTICAL_OFFSETS{
+    0.6, 0.7, 0.7, 0.9, 0.9, 1.0, 0.9, 0.9, 0.7, 0.7};
 
 void getRotateArrowPoints(std::vector<double> &horizontalOffsets,
                           std::vector<double> &verticalOffsets)
@@ -327,15 +333,15 @@ vtkSmartPointer<vtkActor> getOutlineActor(
 vtkSmartPointer<vtkActor> getTranslateArrowShapeActor(
     const ARROWDIRECTION &direction)
 {
-    return getShapeActor(ARROW_HORIZONTAL_OFFSETS, ARROW_VERTICAL_OFFSETS,
-                         direction);
+    return getShapeActor(TRANSLATE_ARROW_HORIZONTAL_OFFSETS,
+                         TRANSLATE_ARROW_VERTICAL_OFFSETS, direction);
 }
 
 vtkSmartPointer<vtkActor> getTranslateArrowOutlineActor(
     const ARROWDIRECTION &direction)
 {
-    return getOutlineActor(ARROW_HORIZONTAL_OFFSETS, ARROW_VERTICAL_OFFSETS,
-                           direction);
+    return getOutlineActor(TRANSLATE_ARROW_HORIZONTAL_OFFSETS,
+                           TRANSLATE_ARROW_VERTICAL_OFFSETS, direction);
 }
 
 vtkSmartPointer<vtkActor> getRotateArrowShapeActor(
@@ -356,6 +362,35 @@ vtkSmartPointer<vtkActor> getRotateArrowOutlineActor(
     getRotateArrowPoints(horizontalOffsets, verticalOffsets);
 
     return getOutlineActor(horizontalOffsets, verticalOffsets, direction);
+}
+
+vtkSmartPointer<vtkActor> getScaleArrowShapeActor()
+{
+    auto actor = getShapeActor(SCALE_ARROW_HORIZONTAL_OFFSETS,
+                               SCALE_ARROW_VERTICAL_OFFSETS, ARROWDIRECTION::X);
+
+    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+    trans->RotateX(45.0);
+    trans->RotateZ(45.0);
+    trans->RotateY(45.0);
+    actor->SetUserTransform(trans);
+
+    return actor;
+}
+
+vtkSmartPointer<vtkActor> getScaleArrowOutlineActor()
+{
+    auto actor =
+        getOutlineActor(SCALE_ARROW_HORIZONTAL_OFFSETS,
+                        SCALE_ARROW_VERTICAL_OFFSETS, ARROWDIRECTION::X);
+
+    vtkSmartPointer<vtkTransform> trans = vtkSmartPointer<vtkTransform>::New();
+    trans->RotateX(45.0);
+    trans->RotateZ(45.0);
+    trans->RotateY(45.0);
+    actor->SetUserTransform(trans);
+
+    return actor;
 }
 
 modernTransformRepresentation::modernTransformRepresentation()
@@ -408,33 +443,12 @@ modernTransformRepresentation::modernTransformRepresentation()
         rotateActors_[i]->SetUserTransform(trans);
     }
 
-    auto scaleConeActor = vtkSmartPointer<vtkActor>::New();
-    {
-        const std::array<double, 3> direction = {1.0, 1.0, 1.0};
-
-        vtkNew<vtkConeSource> coneSource;
-        coneSource->SetResolution(30);
-        coneSource->SetHeight(RING_CROSS_SECTION_RADIUS * 10);
-        coneSource->SetAngle(20);
-        coneSource->SetDirection(direction.data());
-        coneSource->Update();
-
-        vtkNew<vtkPolyDataMapper> mapper;
-        mapper->SetInputConnection(coneSource->GetOutputPort());
-
-        scaleConeActor = vtkSmartPointer<vtkActor>::New();
-        scaleConeActor->SetMapper(mapper);
-
-        vtkSmartPointer<vtkTransform> trans =
-            vtkSmartPointer<vtkTransform>::New();
-        trans->Translate(SCALE_INDICATOR_POS, SCALE_INDICATOR_POS,
-                         SCALE_INDICATOR_POS);
-        scaleConeActor->SetUserTransform(trans);
-    }
-
+    auto scaleShapeActor = getScaleArrowShapeActor();
+    auto scaleOutlineActor = getScaleArrowOutlineActor();
     {
         scaleActor_ = vtkSmartPointer<vtkAssembly>::New();
-        scaleActor_->AddPart(scaleConeActor);
+        scaleActor_->AddPart(scaleShapeActor);
+        scaleActor_->AddPart(scaleOutlineActor);
 
         scaleActor_->SetOrigin(0.0, 0.0, 0.0);
 
