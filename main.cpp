@@ -19,7 +19,6 @@
 #include <vtkTransform.h>
 
 #include "modernTransformRepresentation.hpp"
-#include "simpleTransformRepresentation.hpp"
 #include "transformWidget.hpp"
 
 // This does the actual work.
@@ -68,7 +67,29 @@ class transformCallback : public vtkCommand
 
 int main(int, char *[])
 {
+    vtkNew<vtkCamera> camera;
+    camera->SetParallelProjection(true);
+
     vtkNew<vtkNamedColors> colors;
+
+    // A mainRenderer and render window
+    vtkNew<vtkRenderer> mainRenderer;
+    mainRenderer->SetBackground(colors->GetColor3d("DarkBlue").GetData());
+    mainRenderer->SetActiveCamera(camera);
+    mainRenderer->SetLayer(0);
+
+    vtkNew<vtkRenderer> frontRenderer;
+    frontRenderer->SetActiveCamera(camera);
+    frontRenderer->SetLayer(1);
+
+    vtkNew<vtkRenderWindow> renderWindow;
+    renderWindow->SetNumberOfLayers(2);
+    renderWindow->AddRenderer(mainRenderer);
+    renderWindow->AddRenderer(frontRenderer);
+
+    // An interactor
+    vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+    renderWindowInteractor->SetRenderWindow(renderWindow);
 
     vtkNew<vtkSphereSource> sphereSource;
     sphereSource->Update();
@@ -79,18 +100,6 @@ int main(int, char *[])
     vtkNew<vtkActor> actor;
     actor->SetMapper(mapper);
     actor->GetProperty()->SetColor(colors->GetColor3d("MistyRose").GetData());
-
-    // A renderer and render window
-    vtkNew<vtkRenderer> renderer;
-    vtkNew<vtkRenderWindow> renderWindow;
-    renderWindow->AddRenderer(renderer);
-
-    // renderer->AddActor(actor);
-    renderer->SetBackground(colors->GetColor3d("DarkBlue").GetData());
-
-    // An interactor
-    vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-    renderWindowInteractor->SetRenderWindow(renderWindow);
 
     // Cube Actor
     vtkNew<vtkConeSource> cone;
@@ -106,13 +115,12 @@ int main(int, char *[])
     coneActor->SetMapper(coneMapper);
     coneActor->GetProperty()->SetColor(colors->GetColor3d("Banana").GetData());
     coneActor->SetVisibility(true);
-    renderer->AddActor(coneActor);
+    mainRenderer->AddActor(coneActor);
 
     // Add transformWidget
+    vtkNew<modernTransformRepresentation> rep;
     vtkNew<transformWidget> myWidget;
     myWidget->SetInteractor(renderWindowInteractor);
-
-    vtkNew<modernTransformRepresentation> rep;
     myWidget->SetRepresentation(rep);
 
     double bounds[6] = {-2.0, 4.0, -2.0, 4.0, -2.0, 4.0};
@@ -121,18 +129,19 @@ int main(int, char *[])
     vtkNew<transformCallback> callback;
     callback->setActor(coneActor);
     myWidget->AddObserver(vtkCommand::InteractionEvent, callback);
+    myWidget->SetEnabled(1);
 
     // Add vtkCubeAxesActor
     auto cubeAxesActor = vtkSmartPointer<vtkCubeAxesActor>::New();
     cubeAxesActor->SetBounds(-5.0, 5.0, -5.0, 5.0, -5.0, 5.0);
-    cubeAxesActor->SetCamera(renderer->GetActiveCamera());
-    renderer->AddActor(cubeAxesActor);
+    cubeAxesActor->SetCamera(mainRenderer->GetActiveCamera());
+    mainRenderer->AddActor(cubeAxesActor);
 
     // Axes Widget
     auto vtkAxes = vtkSmartPointer<vtkAxesActor>::New();
     auto axesWidget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
     axesWidget->SetOrientationMarker(vtkAxes);
-    axesWidget->SetDefaultRenderer(renderer);
+    axesWidget->SetDefaultRenderer(mainRenderer);
     axesWidget->SetInteractor(renderWindowInteractor);
     axesWidget->SetViewport(0.0, 0.0, 0.20, 0.20);
     axesWidget->SetEnabled(1);
@@ -140,10 +149,10 @@ int main(int, char *[])
 
     // Reset camera
     double allBounds[6];
-    renderer->ComputeVisiblePropBounds(allBounds);
+    mainRenderer->ComputeVisiblePropBounds(allBounds);
     if (vtkMath::AreBoundsInitialized(allBounds))
     {
-        renderer->ResetCamera(allBounds);
+        mainRenderer->ResetCamera(allBounds);
     }
 
     // Render
@@ -151,7 +160,6 @@ int main(int, char *[])
 
     renderWindowInteractor->Initialize();
     renderWindow->Render();
-    myWidget->On();
 
     // Begin mouse interaction
     renderWindowInteractor->Start();
